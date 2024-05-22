@@ -144,6 +144,7 @@ def get_subject_list():
 #     return(indices,parcel_names)
 
 def get_parcel_indices(atlas, parcels):
+    #parcels MUST be a list of strings
     patternR = '|'.join(['Right_' + parcel for parcel in parcels])
     patternL = '|'.join(['Left_' + parcel for parcel in parcels])
     

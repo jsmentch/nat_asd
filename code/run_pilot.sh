@@ -4,9 +4,9 @@
 #SBATCH --output=/om2/user/jsmentch/nat_asd_logs/%x_%j.out 
 #SBATCH --error=/om2/user/jsmentch/nat_asd_logs/%x_%j.err 
 #SBATCH --partition=normal 
-#SBATCH --time=48:00:00
-#SBATCH --cpus-per-task=1
-#SBATCH --mem=24G
+#SBATCH --time=2:00:00
+#SBATCH --cpus-per-task=2
+#SBATCH --mem=5G
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jsmentch@mit.edu
 
@@ -16,12 +16,15 @@ conda activate hbn_asd
 
 #TASK_ID=${roi_id[$SLURM_ARRAY_TASK_ID]}
 
+# while read sub; do sbatch run_pilot.sh $sub; done < pilots_ru_dm_list.txt
+
+
 #echo "Processing: $TASK_ID"
 
-sub="NDARHJ830RXD"
+sub=$1
 
-parcel='A1'
+#parcel='A1'
 
 #python pilot.py "${sub}" "${parcel}"
 
-python pilot.py
+python pilot.py $sub
