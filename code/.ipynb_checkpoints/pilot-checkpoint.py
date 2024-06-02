@@ -82,7 +82,7 @@ atlas_indices_indices = np.where(np.isin(atlas_data, atlas_indices))[0]
 
 print(f'loaded parcels {parcels}')
 
-n_components=200
+#n_components=200
 delay=7
 
 im_file = f'/nese/mit/group/sig/projects/hbn/hbn_bids/derivatives/xcp_d_0.7.1/sub-{sub}/ses-HBNsiteRU/func/sub-{sub}_ses-HBNsiteRU_task-movieDM_space-fsLR_den-91k_desc-denoisedSmoothed_bold.dtseries.nii'

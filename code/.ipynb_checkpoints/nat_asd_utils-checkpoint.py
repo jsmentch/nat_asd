@@ -47,7 +47,7 @@ def load_audio_features_SRP(stim,delay,all_layers,n_components):
     file.close()
     return(X)
 
-def load_audio_features_PCA(stim,delay,all_layers,n_components):
+def load_audio_features_PCA(stim,all_layers,n_components):
     #dimensionality reduction to 50 components
     transformer = PCA(n_components=n_components)
     print(f'loading features {n_components} PCA components')
@@ -64,7 +64,9 @@ def load_audio_features_PCA(stim,delay,all_layers,n_components):
     # # Now you can access datasets within the file
         data = file[layer]
         #print(data.shape, layer)
-        X.append(  transformer.fit_transform(  np.array(data)[:(-1*delay),:]  )  )
+        #X.append(  transformer.fit_transform(  np.array(data)[:(-1*delay),:]  )  )
+        X.append(  transformer.fit_transform(  np.array(data))  )
+
         # X_train.append(np.array(data)[:600,:])
         # X_test.append(np.array(data)[600:,:])
     
@@ -73,7 +75,7 @@ def load_audio_features_PCA(stim,delay,all_layers,n_components):
     return(X)
     
 
-def load_video_features(stim,delay,all_layers):
+def load_video_features(stim,all_layers):
     #dimensionality reduction to 50 components
     transformer = SparseRandomProjection(n_components=50)
     save_path = f'../data/{stim}_frames_resnet50/'
@@ -87,7 +89,9 @@ def load_video_features(stim,delay,all_layers):
         emb = np.load(f'{save_path}{layer}.npz')
         for k in list(emb.keys()):
             X_layer.append(emb[k].flatten())
-        X.append(  transformer.fit_transform(  np.array(X_layer)[:(-1*delay),:]  )  )
+        #X.append(  transformer.fit_transform(  np.array(X_layer)[:(-1*delay),:]  )  )
+        X.append(  transformer.fit_transform(  np.array(X_layer)  )  )
+
     return(X)
 
 
@@ -157,7 +161,7 @@ def get_parcel_indices(atlas, parcels):
     parcel_names=atlas[matches]['label'].tolist()
     return(atlas_indices,indices,parcel_names)
     
-def load_audio_features_RAW(stim,delay,all_layers):
+def load_audio_features_RAW(stim,all_layers):
     #dimensionality reduction to 50 components
     #transformer = SparseRandomProjection(n_components=50)
     
@@ -175,7 +179,9 @@ def load_audio_features_RAW(stim,delay,all_layers):
         data = file[layer]
         print(data.shape, layer)
         #X.append(  transformer.fit_transform(  np.array(data)[:(-1*delay),:]  )  )
-        X.append( np.array(data)[:(-1*delay),:]  )
+        #X.append( np.array(data)[:(-1*delay),:]  )
+        X.append( np.array(data) )
+
 
         # X_train.append(np.array(data)[:600,:])
         # X_test.append(np.array(data)[600:,:])
