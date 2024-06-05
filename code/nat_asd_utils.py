@@ -19,7 +19,15 @@ import time
 
 
 #use the conda environment hbn_asd
-
+def load_audio_features_processed(filename,all_layers):
+    #load the features that already had PCA applied to them ,etc, from h5 files
+    save_features_dir = f'../data/features/'
+    X=[]
+    file = h5py.File(f'{save_features_dir}{filename}', 'r')
+    for layer in all_layers:
+        X.append(  np.array(file[layer])   )
+    file.close()
+    return(X)
 
 def load_audio_features_SRP(stim,delay,all_layers,n_components):
     #dimensionality reduction to 50 components
