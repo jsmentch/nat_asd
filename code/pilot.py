@@ -42,6 +42,7 @@ def main():
 #    parser.add_argument("-c", "--customparcels", type=str, help="parcels: audio, video, audiovideo, all_select, custom")
     parser.add_argument("-f", "--features", type=str, help="cochresnet50pca1, cochresnet50pca200, manual", required=True)
     parser.add_argument("-d", "--delay", type=int, help="parcels: audio, video, audiovideo, all, custom", required=True)
+    parser.add_argument("-b", "--bootstrap", type=int, help="bootstrap: which permutation it is", default=None)
     parser.add_argument('-l', '--plot', help="to make a plot or not", action='store_true')  # on/off flag
     args = parser.parse_args()
 
@@ -53,6 +54,7 @@ def main():
 
     if args.parcels=='all':
         Y=load_sub_brain_all(sub,delay) #load the whole brain
+        parcels='all'
     else:
         parcels=select_parcels(args.parcels) # load parcel set
         atlas_indices_indices=extract_parcels(parcels) # get indices of parcels
@@ -62,6 +64,13 @@ def main():
 
     X = [array[:Y.shape[0], :] for array in X]
     Y= Y[:X[0].shape[0],:]
+
+    if args.bootstrap is None:
+        print("No value was passed to args.bootstrap")
+    else:
+        print(f"The value passed to args.bootstrap is {args.bootstrap}, randomly permuting features X")
+        for i in range(len(X)):
+            np.random.shuffle(X[i])
     
     print(f'starting regression')
     
