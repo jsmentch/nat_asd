@@ -40,7 +40,7 @@ def main():
     parser.add_argument("-s-", "--subject", type=str, help="input subject(s)", nargs='+', required=True)
     parser.add_argument("-p", "--parcels", type=str, help="parcels: auditory, visual, audiovisual, all_select, all, custom (WIP)", required=True)
 #    parser.add_argument("-c", "--customparcels", type=str, help="parcels: audio, video, audiovideo, all_select, custom")
-    parser.add_argument("-f", "--features", type=str, help="cochresnet50pca1, cochresnet50pca200, manual", required=True)
+    parser.add_argument("-f", "--features", type=str, help="cochresnet50, cochresnet50pca1, cochresnet50pca200, manual", required=True)
     parser.add_argument("-d", "--delay", type=int, help="parcels: audio, video, audiovideo, all, custom", required=True)
     parser.add_argument("-b", "--bootstrap", type=int, help="bootstrap: which permutation it is", default=None)
     parser.add_argument('-l', '--plot', help="to make a plot or not", action='store_true')  # on/off flag
@@ -71,6 +71,7 @@ def main():
         print(f"The value passed to args.bootstrap is {args.bootstrap}, randomly permuting features X")
         for i in range(len(X)):
             np.random.shuffle(X[i])
+        unique_name = unique_name + f'_bootstrap-{args.bootstrap}'
     
     print(f'starting regression')
     
@@ -108,6 +109,16 @@ def load_features(feat_set):
             #print(feature.shape)
             feat_x = resample(feature, 750, axis=0) #resample to 1hz for now 
             X.append(feat_x)
+    elif feat_set=="cochresnet50":
+        features=['input_after_preproc',
+                    'conv1_relu1',
+                    'maxpool1',
+                    'layer1',
+                    'layer2',
+                    'layer3',
+                    'layer4',
+                    'avgpool']
+        X=nat_asd_utils.load_audio_features('DM',features)
     else:
         features=['input_after_preproc',
                     'conv1_relu1',

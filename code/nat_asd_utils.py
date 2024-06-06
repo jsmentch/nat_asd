@@ -18,7 +18,29 @@ import time
 #pd.set_option('display.max_rows', None)
 
 
+
 #use the conda environment hbn_asd
+
+def load_audio_features(stim,all_layers):
+    save_features_dir = f'../data/{stim}_clips_cochresnet50/'
+    X=[]
+    # Open the file 'myfile.h5' in read-only mode
+    file = h5py.File(f'{save_features_dir}cochresnet50_activations.h5', 'r')
+    for layer in all_layers:
+    # # Now you can access datasets within the file
+        data = file[layer]
+        #print(data.shape, layer)
+        #X.append(  np.array(data)[:(-1*delay),:]   )
+        X.append(  np.array(data)   )
+
+        # X_train.append(np.array(data)[:600,:])
+        # X_test.append(np.array(data)[600:,:])
+    
+    # # Don't forget to close the file when you're done
+    file.close()
+    return(X)
+
+
 def load_audio_features_processed(filename,all_layers):
     #load the features that already had PCA applied to them ,etc, from h5 files
     save_features_dir = f'../data/features/'

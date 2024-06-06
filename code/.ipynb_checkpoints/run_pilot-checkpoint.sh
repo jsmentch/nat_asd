@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#SBATCH --job-name=pilot_1s
+#SBATCH --job-name=BIGtest
 #SBATCH --output=/om2/user/jsmentch/nat_asd_logs/%x_%j.out 
 #SBATCH --error=/om2/user/jsmentch/nat_asd_logs/%x_%j.err 
 #SBATCH --partition=normal 
-#SBATCH --time=5:00:00
-#SBATCH --cpus-per-task=2
-#SBATCH --mem=35G
+#SBATCH --time=48:00:00
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=50G
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jsmentch@mit.edu
 
@@ -18,14 +18,14 @@ conda activate hbn_asd
 
 # while read sub; do sbatch run_pilot.sh $sub; done < pilots_ru_dm_list.txt
 
-sub=$1
-#sub=NDARHJ830RXD
+#sub=$1
+sub=NDARHJ830RXD
 
 #parcel='A1'
 
 #python pilot.py "${sub}" "${parcel}"
 
-python pilot.py -s $sub -p all -f cochresnet50pca1 -d 7 -l
+python pilot.py -s $sub -p all -f cochresnet50 -d 7
 #python pilot.py -s $sub -p all -f manual -d 7 -l
 
 
