@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #SBATCH --job-name=boots
-#SBATCH --output=/om2/user/jsmentch/nat_asd_logs/%x_%j.out 
-#SBATCH --error=/om2/user/jsmentch/nat_asd_logs/%x_%j.err 
+#SBATCH --output=/om2/user/jsmentch/nat_asd_logs/%A_%a.out 
+#SBATCH --error=/om2/user/jsmentch/nat_asd_logs/%A_%a.err 
 #SBATCH --partition=normal 
 #SBATCH --time=3:30:00
 #SBATCH --cpus-per-task=2
@@ -18,7 +18,16 @@ conda activate hbn_asd
 
 # while read sub; do sbatch run_pilot.sh $sub; done < pilots_ru_dm_list.txt
 
-boot=$1
+
+args=($@)
+#subjs=(${args[@]:1})
+
+# index slurm array to grab subject
+#SLURM_ARRAY_TASK_ID=0
+boot=${args[${SLURM_ARRAY_TASK_ID}]}
+
+echo "running bootstrap ${boot}"
+#boot=$1
 sub=NDARHJ830RXD
 
 #parcel='A1'
