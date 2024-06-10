@@ -81,10 +81,11 @@ def main():
     print(elapsed_time)
     
     print(f'saving results')
-
+    
     binary_parcels = [np.void(s.encode('utf-8')) for s in parcels]
     binary_features = [np.void(s.encode('utf-8')) for s in features]
-    np.savez(f'../pilot_results/{unique_name}', r2s=r2s, stacked_r2s=stacked_r2s, r2s_weighted=r2s_weighted, S_average=S_average, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
+    output_directory_name='good_pilots'
+    np.savez(f'../{output_directory_name}/{unique_name}', r2s=r2s, stacked_r2s=stacked_r2s, r2s_weighted=r2s_weighted, S_average=S_average, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
 
     if args.plot:
         plot_violins(r2s, stacked_r2s, S_average, features, unique_name)
