@@ -96,6 +96,15 @@ def main():
 
 
 def load_features(feat_set):
+    features_manual=['rms','chroma', 'mfcc', 'mfs', 'as_embed', 'as_scores']
+    features_cochresnet=['input_after_preproc',
+                    'conv1_relu1',
+                    'maxpool1',
+                    'layer1',
+                    'layer2',
+                    'layer3',
+                    'layer4',
+                    'avgpool']
     if feat_set=="manual":
         from scipy.signal import resample
         X=[]
@@ -110,29 +119,108 @@ def load_features(feat_set):
             #print(feature.shape)
             feat_x = resample(feature, 750, axis=0) #resample to 1hz for now 
             X.append(feat_x)
+    elif feat_set=='manuallow':
+        from scipy.signal import resample
+        X=[]
+        features=['rms','chroma', 'mfcc', 'mfs']
+        for f in features:
+            feature=np.load(f'../data/features/DM_{f}.npy')
+            #print(feature.shape)
+            # transformer = PCA(n_components=n_components)
+            scaler = StandardScaler()
+            # feature=transformer.fit_transform(feature)
+            feature = scaler.fit_transform(X=feature,y=None)
+            #print(feature.shape)
+            feat_x = resample(feature, 750, axis=0) #resample to 1hz for now 
+            X.append(feat_x)
+    elif feat_set=='audioset':
+        from scipy.signal import resample
+        X=[]
+        features=['as_embed', 'as_scores']
+        for f in features:
+            feature=np.load(f'../data/features/DM_{f}.npy')
+            #print(feature.shape)
+            # transformer = PCA(n_components=n_components)
+            scaler = StandardScaler()
+            # feature=transformer.fit_transform(feature)
+            feature = scaler.fit_transform(X=feature,y=None)
+            #print(feature.shape)
+            feat_x = resample(feature, 750, axis=0) #resample to 1hz for now 
+            X.append(feat_x)
+    elif feat_set=='manualhrf':
+        features=['rms','chroma', 'mfcc', 'mfs', 'as_embed', 'as_scores']
+        X=nat_asd_utils.load_audio_features_manual_hrf('DM',features)
     elif feat_set=="cochresnet50":
-        features=['input_after_preproc',
-                    'conv1_relu1',
-                    'maxpool1',
-                    'layer1',
-                    'layer2',
-                    'layer3',
-                    'layer4',
-                    'avgpool']
+        features=features_cochresnet
         X=nat_asd_utils.load_audio_features('DM',features)
-    else:
-        features=['input_after_preproc',
-                    'conv1_relu1',
-                    'maxpool1',
-                    'layer1',
-                    'layer2',
-                    'layer3',
-                    'layer4',
-                    'avgpool']
-        if feat_set=="cochresnet50pca1":
-            feature_filename='DM_cochresnet50_activations-mean_PCA-1.hdf5'
-        elif feat_set=="cochresnet50pca200":
-            feature_filename='DM_cochresnet50_activations-mean_PCA-200.hdf5'
+    elif feat_set=="cochresnet50pca1":
+        features=features_cochresnet
+        feature_filename='DM_cochresnet50_activations-mean_PCA-1.hdf5'
+        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+    elif feat_set=="cochresnet50pca200":
+        features=features_cochresnet
+        feature_filename='DM_cochresnet50_activations-mean_PCA-200.hdf5'
+        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+    elif feat_set=="cochresnet50pca5":
+        features=features_cochresnet
+        feature_filename='DM_cochresnet50_activations-mean_PCA-5.hdf5'
+        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+    elif feat_set=="cochresnet50pca10":
+        features=features_cochresnet
+        feature_filename='DM_cochresnet50_activations-mean_PCA-10.hdf5'
+        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+    elif feat_set=="cochresnet50pca50":
+        features=features_cochresnet
+        feature_filename='DM_cochresnet50_activations-mean_PCA-50.hdf5'
+        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+    elif feat_set=="cochresnet50pca100":
+        features=features_cochresnet
+        feature_filename='DM_cochresnet50_activations-mean_PCA-100.hdf5'
+        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+    elif feat_set=="cochresnet50pcafull1":
+        features=features_cochresnet
+        feature_filename='DM_cochresnet50_activations-full_PCA-1.hdf5'
+        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+    elif feat_set=="cochresnet50pcafull200":
+        features=features_cochresnet
+        feature_filename='DM_cochresnet50_activations-full_PCA-200.hdf5'
+        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+    elif feat_set=="cochresnet50pcafull5":
+        features=features_cochresnet
+        feature_filename='DM_cochresnet50_activations-full_PCA-5.hdf5'
+        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+    elif feat_set=="cochresnet50pcafull10":
+        features=features_cochresnet
+        feature_filename='DM_cochresnet50_activations-full_PCA-10.hdf5'
+        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+    elif feat_set=="cochresnet50pcafull50":
+        features=features_cochresnet
+        feature_filename='DM_cochresnet50_activations-full_PCA-50.hdf5'
+        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+    elif feat_set=="cochresnet50pcafull100":
+        features=features_cochresnet
+        feature_filename='DM_cochresnet50_activations-full_PCA-100.hdf5'
+        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+    elif feat_set=="cochresnet50pcac2":
+        features=features_cochresnet
+        X=nat_asd_utils.load_audio_features_PCAc2('DM',features)
+    elif feat_set=="cochresnet50PCAlocal1":
+        feature_filename='DM_cochresnet50_activations-full_PCA-local-1.hdf5'
+        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+    elif feat_set=="cochresnet50PCAlocal10":
+        feature_filename='DM_cochresnet50_activations-full_PCA-local-10.hdf5'
+        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+    elif feat_set=="cochresnet50PCAlocal1mean":
+        feature_filename='DM_cochresnet50_activations-full_PCA-local-1_mean.hdf5'
+        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+    elif feat_set=="cochresnet50PCAlocal10mean":
+        feature_filename='DM_cochresnet50_activations-full_PCA-local-10_mean.hdf5'
+        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+    elif feat_set=="cochresnet50PCAlocal1rev":
+        feature_filename='DM_cochresnet50_activations-full_PCA-local-1_rev.hdf5'
+        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+    elif feat_set=="cochresnet50PCAlocal5rev":
+        feature_filename='DM_cochresnet50_activations-full_PCA-local-5_rev.hdf5'
         X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
 
     return(X,features)

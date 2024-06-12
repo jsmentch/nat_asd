@@ -7,6 +7,7 @@ import h5py
 import hcp_utils as hcp
 from sklearn.random_projection import SparseRandomProjection
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
 
 import numpy as np
 from stacking_fmri import stacking_CV_fmri, stacking_fmri
@@ -50,6 +51,23 @@ def load_audio_features_processed(filename,all_layers):
         X.append(  np.array(file[layer])   )
     file.close()
     return(X)
+
+def load_audio_features_manual_hrf(stim,features):
+    #features=['rms','chroma', 'mfcc', 'mfs', 'as_embed', 'as_scores']
+    import hrf_tools
+    from scipy.signal import resample
+    X=[]
+    for f in features:
+        feature=np.load(f'../data/features/{stim}_{f}.npy')
+        scaler = StandardScaler()
+        feature = scaler.fit_transform(X=feature,y=None)
+        feature.shape
+        hz=feature.shape[0]/750
+        feature=hrf_tools.apply_optimal_hrf_10hz(feature,hz)
+        feature=resample(feature, 750, axis=0) #resample to 1hz for now 
+        X.append(feature)
+    return(X)
+
 
 def load_audio_features_SRP(stim,delay,all_layers,n_components):
     #dimensionality reduction to 50 components
@@ -101,6 +119,24 @@ def load_audio_features_PCA(stim,all_layers,n_components):
         # X_test.append(np.array(data)[600:,:])
     
     # # Don't forget to close the file when you're done
+    file.close()
+    return(X)
+
+
+def load_audio_features_PCAc2(stim,all_layers):
+    #dimensionality reduction to 2 components and discard the first component
+    transformer = PCA(n_components=2)
+    #print(f'loading features 2 PCA components')
+
+    save_features_dir = f'../data/{stim}_clips_cochresnet50/'
+    
+    X=[]
+    file = h5py.File(f'{save_features_dir}cochresnet50_activations.h5', 'r')
+    for layer in all_layers:
+    # # Now you can access datasets within the file
+        data = file[layer]
+        #print(transformer.fit_transform(  np.array(data))[:,1:].shape)
+        X.append(  transformer.fit_transform(  np.array(data))[:,1:]  )
     file.close()
     return(X)
     
