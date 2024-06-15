@@ -17,10 +17,31 @@ import seaborn as sns
 
 import time
 #pd.set_option('display.max_rows', None)
-
-
-
 #use the conda environment hbn_asd
+
+def standardscale(X_raw):
+    from sklearn.preprocessing import StandardScaler
+    X=[]
+    for xx in X_raw:
+        scaler = StandardScaler()
+        X.append( scaler.fit_transform(X=xx,y=None) )
+    return(X)
+
+def apply_pca(X, n_components):
+    from sklearn.decomposition import PCA
+    
+    X_pca=[]
+    for xx in X:
+        pca = PCA(n_components=n_components)
+        X_pca.append(     pca.fit_transform( xx )   )
+    return(X_pca)
+
+def apply_zscore(X):
+    from scipy.stats import zscore
+    X_z=[]
+    for x in X:
+        X_z.append(zscore(x))
+    return(X_z)
 
 def load_audio_features(stim,all_layers):
     save_features_dir = f'../data/{stim}_clips_cochresnet50/'
@@ -61,8 +82,7 @@ def load_audio_features_manual_hrf(stim,features):
         feature=np.load(f'../data/features/{stim}_{f}.npy')
         scaler = StandardScaler()
         feature = scaler.fit_transform(X=feature,y=None)
-        feature.shape
-        hz=feature.shape[0]/750
+        hz=feature.shape[0]/600
         feature=hrf_tools.apply_optimal_hrf_10hz(feature,hz)
         feature=resample(feature, 750, axis=0) #resample to 1hz for now 
         X.append(feature)

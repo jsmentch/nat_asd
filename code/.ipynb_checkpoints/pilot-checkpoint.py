@@ -18,6 +18,8 @@ import time
 import nat_asd_utils
 import sys
 import argparse
+import hrf_tools
+
 """
 script to ...
 Standard usage: python pilot.py -s NDARHJ830RXD -p auditory -f cochresnet50pca1 -d 7 -l
@@ -44,6 +46,8 @@ def main():
     parser.add_argument("-d", "--delay", type=int, help="parcels: audio, video, audiovideo, all, custom", required=True)
     parser.add_argument("-b", "--bootstrap", type=int, help="bootstrap: which permutation it is", default=None)
     parser.add_argument('-l', '--plot', help="to make a plot or not", action='store_true')  # on/off flag
+    parser.add_argument('-z', '--zscore', help="to zscore or not", action='store_true')  # on/off flag
+
     args = parser.parse_args()
 
     sub=args.subject[0]
@@ -63,6 +67,9 @@ def main():
     X,features=load_features(args.features) #load X
 
     X = [array[:Y.shape[0], :] for array in X]
+    if args.zscore:
+        X=nat_asd_utils.apply_zscore(X)
+        unique_name = unique_name + f'_z'
     Y= Y[:X[0].shape[0],:]
 
     if args.bootstrap is None:
@@ -105,6 +112,13 @@ def load_features(feat_set):
                     'layer3',
                     'layer4',
                     'avgpool']
+    features_cochresnet_short=['input_after_preproc',
+                    'conv1_relu1',
+                    'maxpool1',
+                    'layer1',
+                    'layer2',
+                    'layer3',
+                    'layer4']
     if feat_set=="manual":
         from scipy.signal import resample
         X=[]
@@ -150,9 +164,59 @@ def load_features(feat_set):
     elif feat_set=='manualhrf':
         features=['rms','chroma', 'mfcc', 'mfs', 'as_embed', 'as_scores']
         X=nat_asd_utils.load_audio_features_manual_hrf('DM',features)
+    elif feat_set=='manualhrfpca1':
+        features=['rms','chroma', 'mfcc', 'mfs', 'as_embed', 'as_scores']
+        X=nat_asd_utils.load_audio_features_manual_hrf('DM',features)
+        from sklearn.decomposition import PCA
+        X_pca=[]
+        transformer = PCA(n_components=1)
+        for x in X:
+            X_pca.append(   transformer.fit_transform(x)   ) 
+        X=X_pca
+    elif feat_set=='manualhrfpca10':
+        features=['chroma', 'mfcc', 'mfs', 'as_embed', 'as_scores']
+        X=nat_asd_utils.load_audio_features_manual_hrf('DM',features)
+        from sklearn.decomposition import PCA
+        X_pca=[]
+        transformer = PCA(n_components=10)
+        for x in X:
+            X_pca.append(   transformer.fit_transform(x)   ) 
+        X=X_pca
     elif feat_set=="cochresnet50":
         features=features_cochresnet
         X=nat_asd_utils.load_audio_features('DM',features)
+
+
+
+
+    elif feat_set=="cochresnet50pca1hrfssfirst":
+        from sklearn.decomposition import PCA
+        features=features_cochresnet
+        X_raw=nat_asd_utils.load_audio_features('DM',features)
+        X=nat_asd_utils.standardscale(X_raw)
+        X=nat_asd_utils.apply_pca(X, 1)
+        for xx in X:
+            hz=xx.shape[0]/600
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)
+
+    elif feat_set=="cochresnet50pca20hrfssfirst":
+        from sklearn.decomposition import PCA
+        features=features_cochresnet
+        X_raw=nat_asd_utils.load_audio_features('DM',features)
+        X=nat_asd_utils.standardscale(X_raw)
+        X=nat_asd_utils.apply_pca(X, 20)
+        for xx in X:
+            hz=xx.shape[0]/600
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)
+
+    
+    elif feat_set=="cochresnet50pca1hrf":
+        features=features_cochresnet
+        feature_filename='DM_cochresnet50_activations-mean_PCA-1.hdf5'
+        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+        for xx in X:
+            hz=xx.shape[0]/600
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)
     elif feat_set=="cochresnet50pca1":
         features=features_cochresnet
         feature_filename='DM_cochresnet50_activations-mean_PCA-1.hdf5'
@@ -205,21 +269,27 @@ def load_features(feat_set):
         features=features_cochresnet
         X=nat_asd_utils.load_audio_features_PCAc2('DM',features)
     elif feat_set=="cochresnet50PCAlocal1":
+        features=features_cochresnet_short
         feature_filename='DM_cochresnet50_activations-full_PCA-local-1.hdf5'
         X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
     elif feat_set=="cochresnet50PCAlocal10":
+        features=features_cochresnet_short
         feature_filename='DM_cochresnet50_activations-full_PCA-local-10.hdf5'
         X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
     elif feat_set=="cochresnet50PCAlocal1mean":
+        features=features_cochresnet_short
         feature_filename='DM_cochresnet50_activations-full_PCA-local-1_mean.hdf5'
         X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
     elif feat_set=="cochresnet50PCAlocal10mean":
+        features=features_cochresnet_short
         feature_filename='DM_cochresnet50_activations-full_PCA-local-10_mean.hdf5'
         X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
     elif feat_set=="cochresnet50PCAlocal1rev":
+        features=features_cochresnet_short
         feature_filename='DM_cochresnet50_activations-full_PCA-local-1_rev.hdf5'
         X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
     elif feat_set=="cochresnet50PCAlocal5rev":
+        features=features_cochresnet_short
         feature_filename='DM_cochresnet50_activations-full_PCA-local-5_rev.hdf5'
         X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
 
