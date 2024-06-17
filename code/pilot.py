@@ -21,14 +21,17 @@ import argparse
 import hrf_tools
 
 """
-script to ...
+script to run pilot encoding models
 Standard usage: python pilot.py -s NDARHJ830RXD -p auditory -f cochresnet50pca1 -d 7 -l
 """
 # Inputs:
-# - subject
-# - parcels: audio, video, audiovideo, all, custom
-# - features [which features and PCA?] and which layers?
-# - delay length or HRF or FIR, etc
+# - subject: subject id from hbn
+# - parcels: a subset of the MMP parcels eg: audio, video, audiovideo, all, custom[custom not implemented yet]
+# - features: the features to predict brain data from.
+# - delay: length in TRs (0.8s) to account for HRF. If using an hrf feature, set to 0
+# - bootstrap: the permutation count. if a number is given here it will randomly permute features and add the number to the output filename
+# - plot: to plot summary figures or not.
+# - zscore: to apply zscore before regression
 
 # Outputs:
 # - saved results
@@ -42,7 +45,7 @@ def main():
     parser.add_argument("-s-", "--subject", type=str, help="input subject(s)", nargs='+', required=True)
     parser.add_argument("-p", "--parcels", type=str, help="parcels: auditory, visual, audiovisual, all_select, all, custom (WIP)", required=True)
 #    parser.add_argument("-c", "--customparcels", type=str, help="parcels: audio, video, audiovideo, all_select, custom")
-    parser.add_argument("-f", "--features", type=str, help="cochresnet50, cochresnet50pca1, cochresnet50pca200, manual", required=True)
+    parser.add_argument("-f", "--features", type=str, help="eg cochresnet50, cochresnet50pca1, cochresnet50pca200, manual", required=True)
     parser.add_argument("-d", "--delay", type=int, help="parcels: audio, video, audiovideo, all, custom", required=True)
     parser.add_argument("-b", "--bootstrap", type=int, help="bootstrap: which permutation it is", default=None)
     parser.add_argument('-l', '--plot', help="to make a plot or not", action='store_true')  # on/off flag
@@ -53,7 +56,7 @@ def main():
     sub=args.subject[0]
     delay=args.delay
 
-    unique_name=f'sub-{sub}_roi-{args.parcels}_feat-{args.features}_delay-{delay}'
+    unique_name=f'sub-{sub}_roi-{args.parcels}_feat-{args.features}_delay-{delay}' # for filename saving output
     print(f'running subject {sub}')
 
     if args.parcels=='all':
@@ -62,11 +65,11 @@ def main():
     else:
         parcels=select_parcels(args.parcels) # load parcel set
         atlas_indices_indices=extract_parcels(parcels) # get indices of parcels
-        Y=load_sub_brain(sub,delay,atlas_indices_indices) #load brain data
+        Y=load_sub_brain(sub,delay,atlas_indices_indices) #load brain data from selected parcels
     
     X,features=load_features(args.features) #load X
 
-    X = [array[:Y.shape[0], :] for array in X]
+    X = [array[:Y.shape[0], :] for array in X] #trim X features to the same length as the Y brain data since sometimes the run was cut short
     if args.zscore:
         X=nat_asd_utils.apply_zscore(X)
         unique_name = unique_name + f'_z'
@@ -80,10 +83,9 @@ def main():
             np.random.shuffle(X[i])
         unique_name = unique_name + f'_bootstrap-{args.bootstrap}'
     
+    #run stacked regression
     print(f'starting regression')
-    
     r2s, stacked_r2s, r2s_weighted, _, _, S_average = stacking_CV_fmri(Y, X, method = 'cross_val_ridge',n_folds = 5,score_f=R2)
-    
     elapsed_time=time.time() - start_time
     print(elapsed_time)
     
@@ -185,10 +187,6 @@ def load_features(feat_set):
     elif feat_set=="cochresnet50":
         features=features_cochresnet
         X=nat_asd_utils.load_audio_features('DM',features)
-
-
-
-
     elif feat_set=="cochresnet50pca1hrfssfirst":
         from sklearn.decomposition import PCA
         features=features_cochresnet
@@ -198,7 +196,6 @@ def load_features(feat_set):
         for xx in X:
             hz=xx.shape[0]/600
             hrf_tools.apply_optimal_hrf_10hz(xx,hz)
-
     elif feat_set=="cochresnet50pca20hrfssfirst":
         from sklearn.decomposition import PCA
         features=features_cochresnet
@@ -208,8 +205,6 @@ def load_features(feat_set):
         for xx in X:
             hz=xx.shape[0]/600
             hrf_tools.apply_optimal_hrf_10hz(xx,hz)
-
-    
     elif feat_set=="cochresnet50pca1hrf":
         features=features_cochresnet
         feature_filename='DM_cochresnet50_activations-mean_PCA-1.hdf5'
@@ -292,9 +287,7 @@ def load_features(feat_set):
         features=features_cochresnet_short
         feature_filename='DM_cochresnet50_activations-full_PCA-local-5_rev.hdf5'
         X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
-
     return(X,features)
-
 
 def plot_violins(r2s, stacked_r2s, S_average, features, output_name):
     plot_data=np.concatenate((r2s, stacked_r2s.reshape(1, -1)), axis=0).T
@@ -345,8 +338,6 @@ def load_sub_brain_all(sub,delay):
     Y=img_y[delay:,:]
     print(f'loaded brain data')
     return(Y)
-
-
 
 def extract_parcels(parcels):
     atlas,atlas_data=nat_asd_utils.load_glasser()
