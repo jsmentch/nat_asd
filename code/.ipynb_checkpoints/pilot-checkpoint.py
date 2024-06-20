@@ -50,7 +50,8 @@ def main():
     parser.add_argument("-b", "--bootstrap", type=int, help="bootstrap: which permutation it is", default=None)
     parser.add_argument('-l', '--plot', help="to make a plot or not", action='store_true')  # on/off flag
     parser.add_argument('-z', '--zscore', help="to zscore or not", action='store_true')  # on/off flag
-
+    parser.add_argument('-g', '--himalaya', help="to run group banded regression from himalaya instead of stacked regression", action='store_true')  # on/off flag
+    
     args = parser.parse_args()
 
     sub=args.subject[0]
@@ -82,22 +83,75 @@ def main():
         for i in range(len(X)):
             np.random.shuffle(X[i])
         unique_name = unique_name + f'_bootstrap-{args.bootstrap}'
-    
-    #run stacked regression
-    print(f'starting regression')
-    r2s, stacked_r2s, r2s_weighted, _, _, S_average = stacking_CV_fmri(Y, X, method = 'cross_val_ridge',n_folds = 5,score_f=R2)
-    elapsed_time=time.time() - start_time
-    print(elapsed_time)
-    
-    print(f'saving results')
-    
-    binary_parcels = [np.void(s.encode('utf-8')) for s in parcels]
-    binary_features = [np.void(s.encode('utf-8')) for s in features]
-    output_directory_name='good_pilots'
-    np.savez(f'../{output_directory_name}/{unique_name}', r2s=r2s, stacked_r2s=stacked_r2s, r2s_weighted=r2s_weighted, S_average=S_average, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
 
-    if args.plot:
-        plot_violins(r2s, stacked_r2s, S_average, features, unique_name)
+
+    if args.himalaya:
+        #run himalaya banded regression
+        from himalaya.ridge import GroupRidgeCV
+        from stacking_fmri import get_cv_indices
+
+        unique_name = unique_name + f'_himalaya'
+
+        n_time=Y.shape[0]
+        n_folds=5
+        ind = get_cv_indices(n_time, n_folds=n_folds)
+        data=np.copy(Y)
+        #features=np.copy(X)
+        feats=X
+        r2_list=[]
+        coef_list=[]
+        for ind_num in range(n_folds):
+            # split data into training and testing sets
+            train_ind = ind != ind_num
+            test_ind = ind == ind_num
+            train_data = data[train_ind]
+            train_features = [F[train_ind] for F in feats]
+            test_data = data[test_ind]
+            test_features = [F[test_ind] for F in feats]
+        
+        
+        
+        #    X_train, X_test, Y_train, Y_test = train_test_split(X[i], Y, test_size=0.1, shuffle=False)
+            
+            
+            banded_ridge= GroupRidgeCV(groups="input",cv=5)
+            banded_ridge.fit(train_features, train_data)
+            score = banded_ridge.score(test_features, test_data)
+            print("R^2 Score: ", np.mean(score))
+            r2_list.append(score)
+            coef_list.append(banded_ridge.coef_)
+        elapsed_time=time.time() - start_time
+        print(elapsed_time)
+        
+        print(f'saving results')
+        
+        S_average=np.mean(coef_list,axis=0)
+        banded_r2s=np.mean(r2_list,axis=0)
+
+        binary_parcels = [np.void(s.encode('utf-8')) for s in parcels]
+        binary_features = [np.void(s.encode('utf-8')) for s in features]
+        output_directory_name='good_pilots'
+        np.savez(f'../{output_directory_name}/{unique_name}', banded_r2s=banded_r2s, S_average=S_average, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
+
+
+    
+
+    else:
+        #run stacked regression
+        print(f'starting regression')
+        r2s, stacked_r2s, r2s_weighted, _, _, S_average = stacking_CV_fmri(Y, X, method = 'cross_val_ridge',n_folds = 5,score_f=R2)
+        elapsed_time=time.time() - start_time
+        print(elapsed_time)
+        
+        print(f'saving results')
+        
+        binary_parcels = [np.void(s.encode('utf-8')) for s in parcels]
+        binary_features = [np.void(s.encode('utf-8')) for s in features]
+        output_directory_name='good_pilots'
+        np.savez(f'../{output_directory_name}/{unique_name}', r2s=r2s, stacked_r2s=stacked_r2s, r2s_weighted=r2s_weighted, S_average=S_average, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
+    
+        if args.plot:
+            plot_violins(r2s, stacked_r2s, S_average, features, unique_name)
 
 
 
