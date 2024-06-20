@@ -287,6 +287,17 @@ def load_features(feat_set):
         features=features_cochresnet_short
         feature_filename='DM_cochresnet50_activations-full_PCA-local-5_rev.hdf5'
         X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+    elif feat_set=="both_hrf":
+        X=nat_asd_utils.load_both_features_hrf('DM')
+        features=['input_after_preproc',
+                  'conv1_relu1',
+                  'layer1',
+                  'layer2',
+                  'layer3',
+                  'layer4',
+                  'avgpool',
+                  'as_embed', 
+                  'as_scores']
     return(X,features)
 
 def plot_violins(r2s, stacked_r2s, S_average, features, output_name):

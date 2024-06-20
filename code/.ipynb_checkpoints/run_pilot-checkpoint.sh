@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#SBATCH --job-name=crn50pcal5rev
+#SBATCH --job-name=hrf_both
 #SBATCH --output=/om2/user/jsmentch/nat_asd_logs/%x_%j.out 
 #SBATCH --error=/om2/user/jsmentch/nat_asd_logs/%x_%j.err 
 #SBATCH --partition=normal 
-#SBATCH --time=48:00:00
+#SBATCH --time=1:00:00
 #SBATCH --cpus-per-task=2
-#SBATCH --mem=50G
+#SBATCH --mem=30G
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jsmentch@mit.edu
 
@@ -25,7 +25,7 @@ sub=$1
 
 #python pilot.py "${sub}" "${parcel}"
 
-python pilot.py -s $sub -p auditory -f cochresnet50PCAlocal5rev -d 7
+python pilot.py -s $sub -p auditory -f both_hrf -d 0
 #python pilot.py -s $sub -p all -f manual -d 7 -l
 
 

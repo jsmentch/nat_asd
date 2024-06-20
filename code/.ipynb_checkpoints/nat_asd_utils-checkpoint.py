@@ -89,6 +89,35 @@ def load_audio_features_manual_hrf(stim,features):
     return(X)
 
 
+def load_both_features_hrf(stim):
+    features_manual=['as_embed', 'as_scores']
+    features_cochresnet=['input_after_preproc',
+                    'conv1_relu1',
+                    'maxpool1',
+                    'layer1',
+                    'layer2',
+                    'layer3',
+                    'layer4',
+                    'avgpool']
+    from sklearn.decomposition import PCA
+    import hrf_tools
+    
+    features=features_cochresnet
+    X_raw=load_audio_features(stim,features)
+    X=standardscale(X_raw)
+    X=apply_pca(X, 1)
+    for xx in X:
+        hz=xx.shape[0]/600
+        hrf_tools.apply_optimal_hrf_10hz(xx,hz)
+    x1shape=X[0].shape[0]
+    X2=load_audio_features_manual_hrf(stim,features_manual)
+    for xx in X2:
+        X.append(xx)
+    x2shape=X[-1].shape[0]
+    X = [array[:min([x2shape,x1shape]), :] for array in X]
+    return(X)
+
+
 def load_audio_features_SRP(stim,delay,all_layers,n_components):
     #dimensionality reduction to 50 components
     transformer = SparseRandomProjection(n_components=n_components)
