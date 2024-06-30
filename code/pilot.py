@@ -51,6 +51,7 @@ def main():
     parser.add_argument('-l', '--plot', help="to make a plot or not", action='store_true')  # on/off flag
     parser.add_argument('-z', '--zscore', help="to zscore or not", action='store_true')  # on/off flag
     parser.add_argument('-g', '--himalaya', help="to run group banded regression from himalaya instead of stacked regression", action='store_true')  # on/off flag
+    parser.add_argument('-r', '--ridgecv', help="to run simple ridgecv", action='store_true')  # on/off flag
     
     args = parser.parse_args()
 
@@ -70,11 +71,14 @@ def main():
     
     X,features=load_features(args.features) #load X
 
-    X = [array[:Y.shape[0], :] for array in X] #trim X features to the same length as the Y brain data since sometimes the run was cut short
-    if args.zscore:
-        X=nat_asd_utils.apply_zscore(X)
-        unique_name = unique_name + f'_z'
-    Y= Y[:X[0].shape[0],:]
+    if args.ridgecv:
+        print('run ridgecv') #skip the array shaping here and do differently later
+    else:
+        X = [array[:Y.shape[0], :] for array in X] #trim X features to the same length as the Y brain data since sometimes the run was cut short
+        if args.zscore:
+            X=nat_asd_utils.apply_zscore(X)
+            unique_name = unique_name + f'_z'
+        Y= Y[:X[0].shape[0],:]
 
     if args.bootstrap is None:
         print("No value was passed to args.bootstrap")
@@ -134,7 +138,59 @@ def main():
         np.savez(f'../{output_directory_name}/{unique_name}', banded_r2s=banded_r2s, S_average=S_average, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
 
 
-    
+    elif args.ridgecv:
+        from stacking_fmri import get_cv_indices
+        from sklearn.linear_model import RidgeCV
+
+        unique_name = unique_name + f'_ridgecv'
+
+        X = X[:,:Y.shape[0]]
+        Y= Y[:X.shape[1],:]
+        
+        #trim first 20 TRs
+        X = X.T[20:,:]
+        Y= Y[20:,:]
+        
+        n_time=Y.shape[0]
+        n_folds=5
+        ind = get_cv_indices(n_time, n_folds=n_folds)
+        data=np.copy(Y)
+        feats=np.copy(X)
+        
+        test_r2_list=[]
+        train_r2_list=[]
+        coef_list=[]
+        for ind_num in range(n_folds):
+            # split data into training and testing sets
+            train_ind = ind != ind_num
+            test_ind = ind == ind_num
+            train_data = data[train_ind]
+            train_features = feats[train_ind]#[F[train_ind] for F in features]
+            test_data = data[test_ind]
+            test_features = feats[test_ind]#[F[test_ind] for F in features]
+        
+            ridge=RidgeCV()
+            ridge.fit(train_features, train_data)
+            test_score = ridge.score(test_features, test_data)
+            train_score= ridge.score(train_features, train_data)
+            print(f"fold {ind_num} test R^2 Score: ", format(np.mean(test_score), '.2f'))
+            print(f"fold {ind_num} train R^2 Score: ", format(np.mean(train_score), '.2f'))
+        
+            test_r2_list.append(test_score)
+            train_r2_list.append(train_score)
+        elapsed_time=time.time() - start_time
+        print(elapsed_time)
+        
+        print(f'saving results')
+        print("MEAN test R^2 Score: ", format(np.mean(test_r2_list), '.2f'))
+        print("MEAN train R^2 Score: ", format(np.mean(train_r2_list), '.2f'))
+        binary_parcels = [np.void(s.encode('utf-8')) for s in parcels]
+        binary_features = [np.void(s.encode('utf-8')) for s in features]
+        output_directory_name='good_pilots'
+        np.savez(f'../{output_directory_name}/{unique_name}', test_r2_list=test_r2_list, train_r2_list=train_r2_list, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
+
+
+
 
     else:
         #run stacked regression
@@ -189,6 +245,28 @@ def load_features(feat_set):
             #print(feature.shape)
             feat_x = resample(feature, 750, axis=0) #resample to 1hz for now 
             X.append(feat_x)
+    elif feat_set=='concatspeech':
+        X=[]
+        feature_data=[]
+        X1,features=load_features('cochresnet50pca1hrfssfirst')
+        X1 = [x[:,0] for x in X1]
+        X.append(X1[4])
+        X.append(X1[5])
+        
+        X1,feats=load_features('manualhrfpca10')
+        X.append(X1[3][:-1,1])
+        features.append('as_embed_pca2')
+        X1,feats=load_features('audioset')
+        Xx = [x[:-1,:] for x in X1]
+        for xx in Xx:
+            hz=xx.shape[0]/600
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)
+        
+        X.append(Xx[1][:,0])
+        X.append(Xx[1][:,132])
+        features.append('as-Speech')
+        features.append('as-Music')
+        X=np.asanyarray(X)
     elif feat_set=='manuallow':
         from scipy.signal import resample
         X=[]
@@ -422,6 +500,10 @@ def select_parcels(parcel_selection):
         'A4',
         'TA2',
         'A5']
+    elif parcel_selection == 'a4a5':
+        parcels=[
+        'A4',
+        'A5']
     elif parcel_selection == 'visual':
         parcels=[
                 'V1',
@@ -444,6 +526,13 @@ def select_parcels(parcel_selection):
                 'V6',
                 'V6A',
                 'V7']
+    elif parcel_selection == 'earlyvisual':
+        parcels=[
+                'V1',
+                'V2',
+                'V3',
+                'V4',
+                'MT']
     elif parcel_selection == 'audiovisual':
         parcels=[
                 'IPS1',
