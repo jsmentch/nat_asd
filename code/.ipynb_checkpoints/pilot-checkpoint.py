@@ -231,6 +231,7 @@ def load_features(feat_set):
                     'layer2',
                     'layer3',
                     'layer4']
+    features_resnet=['relu','maxpool', 'layer1', 'layer2', 'layer3', 'layer4', 'avgpool']
     if feat_set=="manual":
         from scipy.signal import resample
         X=[]
@@ -340,85 +341,141 @@ def load_features(feat_set):
     elif feat_set=="cochresnet50pca1hrf":
         features=features_cochresnet
         feature_filename='DM_cochresnet50_activations-mean_PCA-1.hdf5'
-        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
         for xx in X:
             hz=xx.shape[0]/600
             hrf_tools.apply_optimal_hrf_10hz(xx,hz)
+
+
+
+    elif feat_set=="resnet50pca1hrf":
+        features=features_resnet
+        feature_filename='DM_resnet50_activations-PCA-1.hdf5'
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
+        for xx in X:
+            hz=xx.shape[0]/600
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)
+    elif feat_set=="resnet50pca5hrf":
+        features=features_resnet
+        feature_filename='DM_resnet50_activations-PCA-5.hdf5'
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
+        for xx in X:
+            hz=xx.shape[0]/600
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)
+    elif feat_set=="resnet50pca10hrf":
+        features=features_resnet
+        feature_filename='DM_resnet50_activations-PCA-10.hdf5'
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
+        for xx in X:
+            hz=xx.shape[0]/600
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz) 
+    elif feat_set=="resnet50pca50hrf":
+        features=features_resnet
+        feature_filename='DM_resnet50_activations-PCA-50.hdf5'
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
+        for xx in X:
+            hz=xx.shape[0]/600
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz) 
+    elif feat_set=="resnet50pca100hrf":
+        features=features_resnet
+        feature_filename='DM_resnet50_activations-PCA-100.hdf5'
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
+        for xx in X:
+            hz=xx.shape[0]/600
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz) 
+    elif feat_set=="resnet50pca200hrf":
+        features=features_resnet
+        feature_filename='DM_resnet50_activations-PCA-200.hdf5'
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
+        for xx in X:
+            hz=xx.shape[0]/600
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz) 
+    elif feat_set=="resnet50pca500hrf":
+        features=features_resnet
+        feature_filename='DM_resnet50_activations-PCA-500.hdf5'
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
+        for xx in X:
+            hz=xx.shape[0]/600
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)     
+
+
+
+    
     elif feat_set=="cochresnet50pca1":
         features=features_cochresnet
         feature_filename='DM_cochresnet50_activations-mean_PCA-1.hdf5'
-        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
     elif feat_set=="cochresnet50pca200":
         features=features_cochresnet
         feature_filename='DM_cochresnet50_activations-mean_PCA-200.hdf5'
-        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
     elif feat_set=="cochresnet50pca5":
         features=features_cochresnet
         feature_filename='DM_cochresnet50_activations-mean_PCA-5.hdf5'
-        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
     elif feat_set=="cochresnet50pca10":
         features=features_cochresnet
         feature_filename='DM_cochresnet50_activations-mean_PCA-10.hdf5'
-        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
     elif feat_set=="cochresnet50pca50":
         features=features_cochresnet
         feature_filename='DM_cochresnet50_activations-mean_PCA-50.hdf5'
-        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
     elif feat_set=="cochresnet50pca100":
         features=features_cochresnet
         feature_filename='DM_cochresnet50_activations-mean_PCA-100.hdf5'
-        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
     elif feat_set=="cochresnet50pcafull1":
         features=features_cochresnet
         feature_filename='DM_cochresnet50_activations-full_PCA-1.hdf5'
-        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
     elif feat_set=="cochresnet50pcafull200":
         features=features_cochresnet
         feature_filename='DM_cochresnet50_activations-full_PCA-200.hdf5'
-        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
     elif feat_set=="cochresnet50pcafull5":
         features=features_cochresnet
         feature_filename='DM_cochresnet50_activations-full_PCA-5.hdf5'
-        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
     elif feat_set=="cochresnet50pcafull10":
         features=features_cochresnet
         feature_filename='DM_cochresnet50_activations-full_PCA-10.hdf5'
-        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
     elif feat_set=="cochresnet50pcafull50":
         features=features_cochresnet
         feature_filename='DM_cochresnet50_activations-full_PCA-50.hdf5'
-        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
     elif feat_set=="cochresnet50pcafull100":
         features=features_cochresnet
         feature_filename='DM_cochresnet50_activations-full_PCA-100.hdf5'
-        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
     elif feat_set=="cochresnet50pcac2":
         features=features_cochresnet
         X=nat_asd_utils.load_audio_features_PCAc2('DM',features)
     elif feat_set=="cochresnet50PCAlocal1":
         features=features_cochresnet_short
         feature_filename='DM_cochresnet50_activations-full_PCA-local-1.hdf5'
-        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
     elif feat_set=="cochresnet50PCAlocal10":
         features=features_cochresnet_short
         feature_filename='DM_cochresnet50_activations-full_PCA-local-10.hdf5'
-        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
     elif feat_set=="cochresnet50PCAlocal1mean":
         features=features_cochresnet_short
         feature_filename='DM_cochresnet50_activations-full_PCA-local-1_mean.hdf5'
-        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
     elif feat_set=="cochresnet50PCAlocal10mean":
         features=features_cochresnet_short
         feature_filename='DM_cochresnet50_activations-full_PCA-local-10_mean.hdf5'
-        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
     elif feat_set=="cochresnet50PCAlocal1rev":
         features=features_cochresnet_short
         feature_filename='DM_cochresnet50_activations-full_PCA-local-1_rev.hdf5'
-        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
     elif feat_set=="cochresnet50PCAlocal5rev":
         features=features_cochresnet_short
         feature_filename='DM_cochresnet50_activations-full_PCA-local-5_rev.hdf5'
-        X=nat_asd_utils.load_audio_features_processed(feature_filename,features)
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
     elif feat_set=="both_hrf":
         X=nat_asd_utils.load_both_features_hrf('DM')
         features=['input_after_preproc',

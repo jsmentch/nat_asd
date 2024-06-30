@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#SBATCH --job-name=hrf_both
+#SBATCH --job-name=vis500
 #SBATCH --output=/om2/user/jsmentch/nat_asd_logs/%x_%j.out 
 #SBATCH --error=/om2/user/jsmentch/nat_asd_logs/%x_%j.err 
 #SBATCH --partition=normal 
-#SBATCH --time=1:00:00
+#SBATCH --time=48:00:00
 #SBATCH --cpus-per-task=2
 #SBATCH --mem=30G
 #SBATCH --mail-type=FAIL,END
@@ -25,8 +25,12 @@ sub=$1
 
 #python pilot.py "${sub}" "${parcel}"
 
-python pilot.py -s $sub -p auditory -f both_hrf -d 0
+#python pilot.py -s $sub -p auditory -f both_hrf -d 0
 #python pilot.py -s $sub -p all -f manual -d 7 -l
+# python pilot.py -s $sub -p earlyvisual -f resnet50pca1hrf -d 0
+# python pilot.py -s $sub -p earlyvisual -f resnet50pca5hrf -d 0
+# python pilot.py -s $sub -p earlyvisual -f resnet50pca10hrf -d 0
+python pilot.py -s $sub -p earlyvisual -f resnet50pca500hrf -d 0
 
 
 

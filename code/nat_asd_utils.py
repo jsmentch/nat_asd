@@ -43,6 +43,18 @@ def apply_zscore(X):
         X_z.append(zscore(x))
     return(X_z)
 
+def compute_pca_components(arrays, variance_threshold=0.95):
+    from sklearn.decomposition import PCA
+    component_counts = []
+    for array in arrays:
+        pca = PCA()
+        pca.fit(array)
+        explained_variance = np.cumsum(pca.explained_variance_ratio_)
+        num_components = np.argmax(explained_variance >= variance_threshold) + 1
+        component_counts.append(num_components)
+    return component_counts
+
+
 def load_audio_features(stim,all_layers):
     save_features_dir = f'../data/{stim}_clips_cochresnet50/'
     X=[]
@@ -63,7 +75,7 @@ def load_audio_features(stim,all_layers):
     return(X)
 
 
-def load_audio_features_processed(filename,all_layers):
+def load_features_processed(filename,all_layers):
     #load the features that already had PCA applied to them ,etc, from h5 files
     save_features_dir = f'../data/features/'
     X=[]
@@ -193,7 +205,7 @@ def load_audio_features_PCAc2(stim,all_layers):
     return(X)
     
 
-def load_video_features(stim,all_layers):
+def load_video_features_srp(stim,all_layers):
     #dimensionality reduction to 50 components
     transformer = SparseRandomProjection(n_components=50)
     save_path = f'../data/{stim}_frames_resnet50/'
