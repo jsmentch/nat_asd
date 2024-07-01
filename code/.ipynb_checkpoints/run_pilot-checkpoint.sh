@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#SBATCH --job-name=vis500
+#SBATCH --job-name=ventralv2
 #SBATCH --output=/om2/user/jsmentch/nat_asd_logs/%x_%j.out 
 #SBATCH --error=/om2/user/jsmentch/nat_asd_logs/%x_%j.err 
 #SBATCH --partition=normal 
-#SBATCH --time=48:00:00
+#SBATCH --time=12:00:00
 #SBATCH --cpus-per-task=2
 #SBATCH --mem=30G
 #SBATCH --mail-type=FAIL,END
@@ -30,8 +30,18 @@ sub=$1
 # python pilot.py -s $sub -p earlyvisual -f resnet50pca1hrf -d 0
 # python pilot.py -s $sub -p earlyvisual -f resnet50pca5hrf -d 0
 # python pilot.py -s $sub -p earlyvisual -f resnet50pca10hrf -d 0
-python pilot.py -s $sub -p earlyvisual -f resnet50pca500hrf -d 0
+#python pilot.py -s $sub -p earlyvisual -f resnet50pca500hrf -d 0
 
+# python pilot.py -s $sub -p ventralvisual -f video_slowfastr50pca1hrf -d 0
+# python pilot.py -s $sub -p ventralvisual -f video_slowfastr50pca10hrf -d 0
+# python pilot.py -s $sub -p ventralvisual -f video_slowfastr50pca100hrf -d 0
 
+# python pilot.py -s $sub -p ventralvisual -f video_resnet50pca1hrf -d 0
+# python pilot.py -s $sub -p ventralvisual -f video_resnet50pca10hrf -d 0
+# python pilot.py -s $sub -p ventralvisual -f video_resnet50pca100hrf -d 0
+
+python pilot.py -s $sub -p ventralvisual -f resnet50pca1hrf -d 0
+python pilot.py -s $sub -p ventralvisual -f resnet50pca10hrf -d 0
+python pilot.py -s $sub -p ventralvisual -f resnet50pca100hrf -d 0
 
 #python pilot.py -s NDARHJ830RXD -p all -f manual -d 7 -l

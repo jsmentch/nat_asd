@@ -231,6 +231,16 @@ def load_features(feat_set):
                     'layer2',
                     'layer3',
                     'layer4']
+    features_slowfast=['blocks.1_fast',
+                    'blocks.1_slow',
+                    'blocks.2_fast',
+                    'blocks.2_slow',
+                    'blocks.3_fast',
+                    'blocks.3_slow',
+                    'blocks.4_fast',
+                    'blocks.4_slow',
+                    'blocks.5',
+                    'blocks.6']
     features_resnet=['relu','maxpool', 'layer1', 'layer2', 'layer3', 'layer4', 'avgpool']
     if feat_set=="manual":
         from scipy.signal import resample
@@ -345,9 +355,6 @@ def load_features(feat_set):
         for xx in X:
             hz=xx.shape[0]/600
             hrf_tools.apply_optimal_hrf_10hz(xx,hz)
-
-
-
     elif feat_set=="resnet50pca1hrf":
         features=features_resnet
         feature_filename='DM_resnet50_activations-PCA-1.hdf5'
@@ -396,11 +403,49 @@ def load_features(feat_set):
         X=nat_asd_utils.load_features_processed(feature_filename,features)
         for xx in X:
             hz=xx.shape[0]/600
-            hrf_tools.apply_optimal_hrf_10hz(xx,hz)     
-
-
-
-    
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)
+    elif feat_set=="video_resnet50pca1hrf":
+        features=features_resnet
+        feature_filename='DM_videos_resnet50-PCA-1.hdf5'
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
+        for xx in X:
+            hz=xx.shape[0]/600
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)
+    elif feat_set=="video_resnet50pca10hrf":
+        features=features_resnet
+        feature_filename='DM_videos_resnet50-PCA-10.hdf5'
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
+        for xx in X:
+            hz=xx.shape[0]/600
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)
+    elif feat_set=="video_resnet50pca100hrf":
+        features=features_resnet
+        feature_filename='DM_videos_resnet50-PCA-100.hdf5'
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
+        for xx in X:
+            hz=xx.shape[0]/600
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)
+    elif feat_set=="video_slowfastr50pca1hrf":
+        features=features_slowfast
+        feature_filename='DM_videos_slowfast_r50-PCA-1.hdf5'
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
+        for xx in X:
+            hz=xx.shape[0]/600
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)
+    elif feat_set=="video_slowfastr50pca10hrf":
+        features=features_slowfast
+        feature_filename='DM_videos_slowfast_r50-PCA-10.hdf5'
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
+        for xx in X:
+            hz=xx.shape[0]/600
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)
+    elif feat_set=="video_slowfastr50pca100hrf":
+        features=features_slowfast
+        feature_filename='DM_videos_slowfast_r50-PCA-100.hdf5'
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
+        for xx in X:
+            hz=xx.shape[0]/600
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)
     elif feat_set=="cochresnet50pca1":
         features=features_cochresnet
         feature_filename='DM_cochresnet50_activations-mean_PCA-1.hdf5'
@@ -590,6 +635,16 @@ def select_parcels(parcel_selection):
                 'V3',
                 'V4',
                 'MT']
+
+    elif parcel_selection == 'ventralvisual':
+        parcels=[
+                'FFC',
+                'V8',
+                'PIT',
+                'VVC',
+                'VMV1',
+                'VMV2',
+                'VMV3']
     elif parcel_selection == 'audiovisual':
         parcels=[
                 'IPS1',
