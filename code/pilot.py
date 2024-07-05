@@ -52,7 +52,8 @@ def main():
     parser.add_argument('-z', '--zscore', help="to zscore or not", action='store_true')  # on/off flag
     parser.add_argument('-g', '--himalaya', help="to run group banded regression from himalaya instead of stacked regression", action='store_true')  # on/off flag
     parser.add_argument('-r', '--ridgecv', help="to run simple ridgecv", action='store_true')  # on/off flag
-    
+    parser.add_argument('-t', '--friendstask', help="the friends task if doing friends", default=None)  # on/off flag
+
     args = parser.parse_args()
 
     sub=args.subject[0]
@@ -67,8 +68,11 @@ def main():
     else:
         parcels=select_parcels(args.parcels) # load parcel set
         atlas_indices_indices=extract_parcels(parcels) # get indices of parcels
-        Y=load_sub_brain(sub,delay,atlas_indices_indices) #load brain data from selected parcels
-    
+        if args.friendstask is None:
+            Y=load_sub_brain(sub,delay,atlas_indices_indices) #load brain data from selected parcels
+        else:
+            Y=load_sub_brain_friends(sub,args.friendstask,delay,atlas_indices_indices)
+            unique_name=unique_name+'_friends'
     X,features=load_features(args.features) #load X
 
     if args.ridgecv:
@@ -278,6 +282,51 @@ def load_features(feat_set):
         features.append('as-Speech')
         features.append('as-Music')
         X=np.asanyarray(X)
+
+
+    elif feat_set=='cochresnet50mean_input_after_preproc_hrf':
+        features=['input_after_preproc']
+        X=nat_asd_utils.load_audio_features('DM',features)[0]
+        hz=X.shape[0]/600
+        hrf_tools.apply_optimal_hrf_10hz(X,hz)
+    elif feat_set=='cochresnet50mean_conv1_relu1_hrf':
+        features=['conv1_relu1']
+        X=nat_asd_utils.load_audio_features('DM',features)[0]
+        hz=X.shape[0]/600
+        hrf_tools.apply_optimal_hrf_10hz(X,hz)
+    elif feat_set=='cochresnet50mean_maxpool1_hrf':
+        features=['maxpool1']
+        X=nat_asd_utils.load_audio_features('DM',features)[0]
+        hz=X.shape[0]/600
+        hrf_tools.apply_optimal_hrf_10hz(X,hz)
+    elif feat_set=='cochresnet50mean_layer1hrf':
+        features=['layer1']
+        X=nat_asd_utils.load_audio_features('DM',features)[0]
+        hz=X.shape[0]/600
+        hrf_tools.apply_optimal_hrf_10hz(X,hz)
+    elif feat_set=='cochresnet50mean_layer2_hrf':
+        features=['layer2']
+        X=nat_asd_utils.load_audio_features('DM',features)[0]
+        hz=X.shape[0]/600
+        hrf_tools.apply_optimal_hrf_10hz(X,hz)
+    elif feat_set=='cochresnet50mean_layer3_hrf':
+        features=['layer3']
+        X=nat_asd_utils.load_audio_features('DM',features)[0]
+        hz=X.shape[0]/600
+        hrf_tools.apply_optimal_hrf_10hz(X,hz)
+    elif feat_set=='cochresnet50mean_layer4_hrf':
+        features=['layer4']
+        X=nat_asd_utils.load_audio_features('DM',features)[0]
+        hz=X.shape[0]/600
+        hrf_tools.apply_optimal_hrf_10hz(X,hz)
+    elif feat_set=='cochresnet50mean_avgpool_hrf':
+        features=['avgpool']
+        X=nat_asd_utils.load_audio_features('DM',features)[0]
+        hz=X.shape[0]/600
+        hrf_tools.apply_optimal_hrf_10hz(X,hz)
+
+
+    
     elif feat_set=='manuallow':
         from scipy.signal import resample
         X=[]
@@ -348,6 +397,24 @@ def load_features(feat_set):
         for xx in X:
             hz=xx.shape[0]/600
             hrf_tools.apply_optimal_hrf_10hz(xx,hz)
+    elif feat_set=="cochresnet50pca10hrfssfirst":
+        from sklearn.decomposition import PCA
+        features=features_cochresnet
+        X_raw=nat_asd_utils.load_audio_features('DM',features)
+        X=nat_asd_utils.standardscale(X_raw)
+        X=nat_asd_utils.apply_pca(X, 10)
+        for xx in X:
+            hz=xx.shape[0]/600
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)            
+    elif feat_set=="cochresnet50pca100hrfssfirst":
+        from sklearn.decomposition import PCA
+        features=features_cochresnet
+        X_raw=nat_asd_utils.load_audio_features('DM',features)
+        X=nat_asd_utils.standardscale(X_raw)
+        X=nat_asd_utils.apply_pca(X, 100)
+        for xx in X:
+            hz=xx.shape[0]/600
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)            
     elif feat_set=="cochresnet50pca1hrf":
         features=features_cochresnet
         feature_filename='DM_cochresnet50_activations-mean_PCA-1.hdf5'
@@ -404,6 +471,61 @@ def load_features(feat_set):
         for xx in X:
             hz=xx.shape[0]/600
             hrf_tools.apply_optimal_hrf_10hz(xx,hz)
+
+
+
+    elif feat_set=="cochresnet50pca1hrffriends_s01e02a":
+        features=features_cochresnet
+        feature_filename='friends_s01e02a_cochresnet50_activations-mean_PCA-1.hdf5'
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
+        for xx in X:
+            hz=xx.shape[0]/703
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)
+    elif feat_set=="cochresnet50pca10hrffriends_s01e02a":
+        features=features_cochresnet
+        feature_filename='friends_s01e02a_cochresnet50_activations-mean_PCA-10.hdf5'
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
+        for xx in X:
+            hz=xx.shape[0]/703
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)
+    elif feat_set=="cochresnet50pca100hrffriends_s01e02a":
+        features=features_cochresnet
+        feature_filename='friends_s01e02a_cochresnet50_activations-mean_PCA-100.hdf5'
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
+        for xx in X:
+            hz=xx.shape[0]/703
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)
+    elif feat_set=="cochresnet50pca1hrffriends_s01e02b":
+        features=features_cochresnet
+        feature_filename='friends_s01e02b_cochresnet50_activations-mean_PCA-1.hdf5'
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
+        for xx in X:
+            hz=xx.shape[0]/703
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)
+    elif feat_set=="cochresnet50pca10hrffriends_s01e02b":
+        features=features_cochresnet
+        feature_filename='friends_s01e02b_cochresnet50_activations-mean_PCA-10.hdf5'
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
+        for xx in X:
+            hz=xx.shape[0]/703
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)
+    elif feat_set=="cochresnet50pca100hrffriends_s01e02b":
+        features=features_cochresnet
+        feature_filename='friends_s01e02b_cochresnet50_activations-mean_PCA-100.hdf5'
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
+        for xx in X:
+            hz=xx.shape[0]/703
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)
+
+
+
+
+
+
+
+
+
+    
     elif feat_set=="video_resnet50pca1hrf":
         features=features_resnet
         feature_filename='DM_videos_resnet50-PCA-1.hdf5'
@@ -470,6 +592,35 @@ def load_features(feat_set):
         features=features_cochresnet
         feature_filename='DM_cochresnet50_activations-mean_PCA-100.hdf5'
         X=nat_asd_utils.load_features_processed(feature_filename,features)
+
+    
+    
+    elif feat_set=="cochresnet50pca1friends_s01e02a":
+        features=features_cochresnet
+        feature_filename='friends_s01e02a_cochresnet50_activations-mean_PCA-1.hdf5'
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
+    elif feat_set=="cochresnet50pca10friends_s01e02a":
+        features=features_cochresnet
+        feature_filename='friends_s01e02a_cochresnet50_activations-mean_PCA-10.hdf5'
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
+    elif feat_set=="cochresnet50pca100friends_s01e02a":
+        features=features_cochresnet
+        feature_filename='friends_s01e02a_cochresnet50_activations-mean_PCA-100.hdf5'
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
+    elif feat_set=="cochresnet50pca1friends_s01e02b":
+        features=features_cochresnet
+        feature_filename='friends_s01e02b_cochresnet50_activations-mean_PCA-1.hdf5'
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
+    elif feat_set=="cochresnet50pca10friends_s01e02b":
+        features=features_cochresnet
+        feature_filename='friends_s01e02b_cochresnet50_activations-mean_PCA-10.hdf5'
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
+    elif feat_set=="cochresnet50pca100friends_s01e02b":
+        features=features_cochresnet
+        feature_filename='friends_s01e02b_cochresnet50_activations-mean_PCA-100.hdf5'
+        X=nat_asd_utils.load_features_processed(feature_filename,features)
+
+    
     elif feat_set=="cochresnet50pcafull1":
         features=features_cochresnet
         feature_filename='DM_cochresnet50_activations-full_PCA-1.hdf5'
@@ -570,6 +721,17 @@ def plot_violins(r2s, stacked_r2s, S_average, features, output_name):
 
 def load_sub_brain(sub,delay,atlas_indices_indices):    
     im_file = f'/nese/mit/group/sig/projects/hbn/hbn_bids/derivatives/xcp_d_0.7.1/sub-{sub}/ses-HBNsiteRU/func/sub-{sub}_ses-HBNsiteRU_task-movieDM_space-fsLR_den-91k_desc-denoisedSmoothed_bold.dtseries.nii'
+    img = nb.load(im_file)
+    img_y = img.get_fdata()
+    Y=img_y[delay:,atlas_indices_indices]
+    print(f'loaded brain data')
+    return(Y)
+
+
+def load_sub_brain_friends(sub,task,delay,atlas_indices_indices):        
+    fmriprep_folder='/nese/mit/group/sig/projects/cneuromod/friends/postproc_fmriprep'
+    ses='001'
+    im_file=f'{fmriprep_folder}/sub-{sub}/sub-{sub}_ses-{ses}_task-{task}_space-fsLR_den-91k_bold_smoothed.dtseries.nii'
     img = nb.load(im_file)
     img_y = img.get_fdata()
     Y=img_y[delay:,atlas_indices_indices]

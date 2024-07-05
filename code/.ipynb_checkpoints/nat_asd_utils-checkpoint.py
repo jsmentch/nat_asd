@@ -171,6 +171,7 @@ def load_audio_features_PCA(stim,all_layers,n_components):
     for layer in all_layers:
     # # Now you can access datasets within the file
         data = file[layer]
+        data = np.nan_to_num(data, nan=0.0)
         #print(data.shape, layer)
         #X.append(  transformer.fit_transform(  np.array(data)[:(-1*delay),:]  )  )
         X.append(  transformer.fit_transform(  np.array(data))  )
