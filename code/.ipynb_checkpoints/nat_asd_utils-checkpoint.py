@@ -158,6 +158,7 @@ def load_audio_features_SRP(stim,delay,all_layers,n_components):
 def load_audio_features_PCA(stim,all_layers,n_components):
     #dimensionality reduction to 50 components
     transformer = PCA(n_components=n_components)
+    
     print(f'loading features {n_components} PCA components')
 
     save_features_dir = f'../data/{stim}_clips_cochresnet50/'
@@ -174,7 +175,8 @@ def load_audio_features_PCA(stim,all_layers,n_components):
         data = np.nan_to_num(data, nan=0.0)
         #print(data.shape, layer)
         #X.append(  transformer.fit_transform(  np.array(data)[:(-1*delay),:]  )  )
-        X.append(  transformer.fit_transform(  np.array(data))  )
+        scaler = StandardScaler()
+        X.append( scaler.fit_transform(X= transformer.fit_transform(  np.array(data)),y=None)  )
 
         # X_train.append(np.array(data)[:600,:])
         # X_test.append(np.array(data)[600:,:])

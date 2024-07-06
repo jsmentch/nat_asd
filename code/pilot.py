@@ -730,8 +730,8 @@ def load_sub_brain(sub,delay,atlas_indices_indices):
 
 def load_sub_brain_friends(sub,task,delay,atlas_indices_indices):        
     fmriprep_folder='/nese/mit/group/sig/projects/cneuromod/friends/postproc_fmriprep'
-    ses='001'
-    im_file=f'{fmriprep_folder}/sub-{sub}/sub-{sub}_ses-{ses}_task-{task}_space-fsLR_den-91k_bold_smoothed.dtseries.nii'
+    pattern=f'{fmriprep_folder}/sub-{sub}/sub-{sub}_ses-*_task-{task}_space-fsLR_den-91k_bold_smoothed.dtseries.nii'
+    im_file = glob.glob(pattern)[0]
     img = nb.load(im_file)
     img_y = img.get_fdata()
     Y=img_y[delay:,atlas_indices_indices]
