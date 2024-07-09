@@ -299,7 +299,7 @@ def load_features(feat_set):
         X=nat_asd_utils.load_audio_features('DM',features)[0]
         hz=X.shape[0]/600
         hrf_tools.apply_optimal_hrf_10hz(X,hz)
-    elif feat_set=='cochresnet50mean_layer1hrf':
+    elif feat_set=='cochresnet50mean_layer1_hrf':
         features=['layer1']
         X=nat_asd_utils.load_audio_features('DM',features)[0]
         hz=X.shape[0]/600

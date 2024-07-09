@@ -4,7 +4,7 @@
 #SBATCH --output=/om2/user/jsmentch/nat_asd_logs/%x_%j.out 
 #SBATCH --error=/om2/user/jsmentch/nat_asd_logs/%x_%j.err 
 #SBATCH --partition=normal 
-#SBATCH --time=0:30:00
+#SBATCH --time=2:00:00
 #SBATCH --cpus-per-task=2
 #SBATCH --mem=30G
 #SBATCH --mail-type=FAIL,END
@@ -35,12 +35,12 @@ sub=$1
 # python pilot.py -s $sub -p auditory -f cochresnet50pca10hrffriends_s01e02b -t s01e02b -d 0
 # python pilot.py -s $sub -p auditory -f cochresnet50pca100hrffriends_s01e02b -t s01e02b -d 0
 
-python pilot.py -s $sub -p a4a5 -f cochresnet50pca1hrffriends_s01e02a -t s01e02a -d 0
-python pilot.py -s $sub -p a4a5 -f cochresnet50pca10hrffriends_s01e02a -t s01e02a -d 0
-python pilot.py -s $sub -p a4a5 -f cochresnet50pca100hrffriends_s01e02a -t s01e02a -d 0
-python pilot.py -s $sub -p a4a5 -f cochresnet50pca1hrffriends_s01e02b -t s01e02b -d 0
-python pilot.py -s $sub -p a4a5 -f cochresnet50pca10hrffriends_s01e02b -t s01e02b -d 0
-python pilot.py -s $sub -p a4a5 -f cochresnet50pca100hrffriends_s01e02b -t s01e02b -d 0
+# python pilot.py -s $sub -p a4a5 -f cochresnet50pca1hrffriends_s01e02a -t s01e02a -d 0
+# python pilot.py -s $sub -p a4a5 -f cochresnet50pca10hrffriends_s01e02a -t s01e02a -d 0
+# python pilot.py -s $sub -p a4a5 -f cochresnet50pca100hrffriends_s01e02a -t s01e02a -d 0
+# python pilot.py -s $sub -p a4a5 -f cochresnet50pca1hrffriends_s01e02b -t s01e02b -d 0
+# python pilot.py -s $sub -p a4a5 -f cochresnet50pca10hrffriends_s01e02b -t s01e02b -d 0
+# python pilot.py -s $sub -p a4a5 -f cochresnet50pca100hrffriends_s01e02b -t s01e02b -d 0
 
 # python pilot.py -s $sub -p a4a5 -f manualhrfpca10 -d 0
 # python pilot.py -s $sub -p a4a5 -f both_hrf -d 0
@@ -50,14 +50,14 @@ python pilot.py -s $sub -p a4a5 -f cochresnet50pca100hrffriends_s01e02b -t s01e0
 # python pilot.py -s $sub -p a4a5 -f cochresnet50pca10hrfssfirst -d 0
 # python pilot.py -s $sub -p a4a5 -f cochresnet50pca100hrfssfirst -d 0
 
-# python pilot.py -s $sub -p a4a5 -f cochresnet50mean_input_after_preproc_hrf -d 0 -r
-# python pilot.py -s $sub -p a4a5 -f cochresnet50mean_conv1_relu1_hrf -d 0 -r
-# python pilot.py -s $sub -p a4a5 -f cochresnet50mean_maxpool1_hrf -d 0 -r
-# python pilot.py -s $sub -p a4a5 -f cochresnet50mean_layer1hrf -d 0 -r
-# python pilot.py -s $sub -p a4a5 -f cochresnet50mean_layer2hrf -d 0 -r
-# python pilot.py -s $sub -p a4a5 -f cochresnet50mean_layer3hrf -d 0 -r
-# python pilot.py -s $sub -p a4a5 -f cochresnet50mean_layer4hrf -d 0 -r
-# python pilot.py -s $sub -p a4a5 -f cochresnet50mean_avgpool_hrf -d 0 -r
+#python pilot.py -s $sub -p a4a5 -f cochresnet50mean_input_after_preproc_hrf -d 0 -r
+python pilot.py -s $sub -p a4a5 -f cochresnet50mean_conv1_relu1_hrf -d 0 -r
+python pilot.py -s $sub -p a4a5 -f cochresnet50mean_maxpool1_hrf -d 0 -r
+python pilot.py -s $sub -p a4a5 -f cochresnet50mean_layer1_hrf -d 0 -r
+python pilot.py -s $sub -p a4a5 -f cochresnet50mean_layer2_hrf -d 0 -r
+python pilot.py -s $sub -p a4a5 -f cochresnet50mean_layer3_hrf -d 0 -r
+python pilot.py -s $sub -p a4a5 -f cochresnet50mean_layer4_hrf -d 0 -r
+python pilot.py -s $sub -p a4a5 -f cochresnet50mean_avgpool_hrf -d 0 -r
 
 
 
