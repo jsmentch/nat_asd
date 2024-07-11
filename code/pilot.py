@@ -52,6 +52,9 @@ def main():
     parser.add_argument('-z', '--zscore', help="to zscore or not", action='store_true')  # on/off flag
     parser.add_argument('-g', '--himalaya', help="to run group banded regression from himalaya instead of stacked regression", action='store_true')  # on/off flag
     parser.add_argument('-r', '--ridgecv', help="to run simple ridgecv", action='store_true')  # on/off flag
+    parser.add_argument('-e', '--elasticnetcv', help="to run simple elasticnetcv", action='store_true')  # on/off flag
+    parser.add_argument('-a', '--lassocv', help="to run simple elasticnetcv", action='store_true')  # on/off flag
+
     parser.add_argument('-t', '--friendstask', help="the friends task if doing friends", default=None)  # on/off flag
 
     args = parser.parse_args()
@@ -77,6 +80,10 @@ def main():
 
     if args.ridgecv:
         print('run ridgecv') #skip the array shaping here and do differently later
+    elif args.elasticnetcv:
+        print('run elasticnetcv') #skip the array shaping here and do differently later
+    elif args.lassocv:
+        print('run lassocv') #skip the array shaping here and do differently later
     else:
         X = [array[:Y.shape[0], :] for array in X] #trim X features to the same length as the Y brain data since sometimes the run was cut short
         if args.zscore:
@@ -193,6 +200,110 @@ def main():
         output_directory_name='good_pilots'
         np.savez(f'../{output_directory_name}/{unique_name}', test_r2_list=test_r2_list, train_r2_list=train_r2_list, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
 
+    elif args.elasticnetcv:
+        from stacking_fmri import get_cv_indices
+        from sklearn.linear_model import MultiTaskElasticNetCV
+
+        unique_name = unique_name + f'_elasticnetcv'
+
+        X = X[:,:Y.shape[0]]
+        Y= Y[:X.shape[1],:]
+        
+        #trim first 20 TRs
+        X = X.T[20:,:]
+        Y= Y[20:,:]
+        
+        n_time=Y.shape[0]
+        n_folds=5
+        ind = get_cv_indices(n_time, n_folds=n_folds)
+        data=np.copy(Y)
+        feats=np.copy(X)
+        
+        test_r2_list=[]
+        train_r2_list=[]
+        coef_list=[]
+        for ind_num in range(n_folds):
+            # split data into training and testing sets
+            train_ind = ind != ind_num
+            test_ind = ind == ind_num
+            train_data = data[train_ind]
+            train_features = feats[train_ind]#[F[train_ind] for F in features]
+            test_data = data[test_ind]
+            test_features = feats[test_ind]#[F[test_ind] for F in features]
+        
+            elasticnet=MultiTaskElasticNetCV()
+            elasticnet.fit(train_features, train_data)
+            test_score = elasticnet.score(test_features, test_data)
+            train_score= elasticnet.score(train_features, train_data)
+            print(f"fold {ind_num} test R^2 Score: ", format(np.mean(test_score), '.2f'))
+            print(f"fold {ind_num} train R^2 Score: ", format(np.mean(train_score), '.2f'))
+        
+            test_r2_list.append(test_score)
+            train_r2_list.append(train_score)
+        elapsed_time=time.time() - start_time
+        print(elapsed_time)
+        
+        print(f'saving results')
+        print("MEAN test R^2 Score: ", format(np.mean(test_r2_list), '.2f'))
+        print("MEAN train R^2 Score: ", format(np.mean(train_r2_list), '.2f'))
+        binary_parcels = [np.void(s.encode('utf-8')) for s in parcels]
+        binary_features = [np.void(s.encode('utf-8')) for s in features]
+        output_directory_name='good_pilots'
+        np.savez(f'../{output_directory_name}/{unique_name}', test_r2_list=test_r2_list, train_r2_list=train_r2_list, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
+
+
+    elif args.lassocv:
+        from stacking_fmri import get_cv_indices
+        from sklearn.linear_model import MultiTaskLassoCV
+
+        unique_name = unique_name + f'_lassocv'
+
+        X = X[:,:Y.shape[0]]
+        Y= Y[:X.shape[1],:]
+        
+        #trim first 20 TRs
+        X = X.T[20:,:]
+        Y= Y[20:,:]
+        
+        n_time=Y.shape[0]
+        n_folds=5
+        ind = get_cv_indices(n_time, n_folds=n_folds)
+        data=np.copy(Y)
+        feats=np.copy(X)
+        
+        test_r2_list=[]
+        train_r2_list=[]
+        coef_list=[]
+        for ind_num in range(n_folds):
+            # split data into training and testing sets
+            train_ind = ind != ind_num
+            test_ind = ind == ind_num
+            train_data = data[train_ind]
+            train_features = feats[train_ind]#[F[train_ind] for F in features]
+            test_data = data[test_ind]
+            test_features = feats[test_ind]#[F[test_ind] for F in features]
+        
+            lasso=MultiTaskLassoCV()
+            lasso.fit(train_features, train_data)
+            test_score = lasso.score(test_features, test_data)
+            train_score= lasso.score(train_features, train_data)
+            print(f"fold {ind_num} test R^2 Score: ", format(np.mean(test_score), '.2f'))
+            print(f"fold {ind_num} train R^2 Score: ", format(np.mean(train_score), '.2f'))
+        
+            test_r2_list.append(test_score)
+            train_r2_list.append(train_score)
+        elapsed_time=time.time() - start_time
+        print(elapsed_time)
+        
+        print(f'saving results')
+        print("MEAN test R^2 Score: ", format(np.mean(test_r2_list), '.2f'))
+        print("MEAN train R^2 Score: ", format(np.mean(train_r2_list), '.2f'))
+        binary_parcels = [np.void(s.encode('utf-8')) for s in parcels]
+        binary_features = [np.void(s.encode('utf-8')) for s in features]
+        output_directory_name='good_pilots'
+        np.savez(f'../{output_directory_name}/{unique_name}', test_r2_list=test_r2_list, train_r2_list=train_r2_list, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
+
+    
 
 
 
