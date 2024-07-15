@@ -8,13 +8,10 @@ import hcp_utils as hcp
 from sklearn.random_projection import SparseRandomProjection
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
-
-import numpy as np
 from stacking_fmri import stacking_CV_fmri, stacking_fmri
 from ridge_tools import R2
 import matplotlib.pyplot as plt
 import seaborn as sns
-
 import time
 #pd.set_option('display.max_rows', None)
 #use the conda environment hbn_asd
@@ -27,9 +24,23 @@ def standardscale(X_raw):
         X.append( scaler.fit_transform(X=xx,y=None) )
     return(X)
 
+def apply_srp(X,eps):
+    from sklearn.random_projection import johnson_lindenstrauss_min_dim
+
+    X_srp=[]
+    for xx in X:
+        n_samples=xx.shape[0]
+        n_components=johnson_lindenstrauss_min_dim(n_samples=n_samples, eps=eps)
+
+        if n_components < xx.shape[1]:
+            srp = SparseRandomProjection(n_components=n_components)
+            X_srp.append(     srp.fit_transform( xx )   )
+        else:
+            X_srp.append(xx)
+    return(X_srp)
+    
 def apply_pca(X, n_components):
     from sklearn.decomposition import PCA
-    
     X_pca=[]
     for xx in X:
         pca = PCA(n_components=n_components)
@@ -54,7 +65,6 @@ def compute_pca_components(arrays, variance_threshold=0.95):
         component_counts.append(num_components)
     return component_counts
 
-
 def load_audio_features(stim,all_layers):
     save_features_dir = f'../data/{stim}_clips_cochresnet50/'
     X=[]
@@ -63,17 +73,10 @@ def load_audio_features(stim,all_layers):
     for layer in all_layers:
     # # Now you can access datasets within the file
         data = file[layer]
-        #print(data.shape, layer)
-        #X.append(  np.array(data)[:(-1*delay),:]   )
         X.append(  np.array(data)   )
-
-        # X_train.append(np.array(data)[:600,:])
-        # X_test.append(np.array(data)[600:,:])
-    
     # # Don't forget to close the file when you're done
     file.close()
     return(X)
-
 
 def load_features_processed(filename,all_layers):
     #load the features that already had PCA applied to them ,etc, from h5 files
@@ -128,18 +131,12 @@ def load_both_features_hrf(stim):
     X = [array[:min([x2shape,x1shape]), :] for array in X]
     return(X)
 
-
 def load_audio_features_SRP(stim,delay,all_layers,n_components):
     #dimensionality reduction to 50 components
     transformer = SparseRandomProjection(n_components=n_components)
     print(f'loading features {n_components} SRP components')
-
-
     save_features_dir = f'../data/{stim}_clips_cochresnet50/'
-    
     X=[]
-    # X_train=[]
-    # X_test=[]
     #print('CochResNet50 time-averaged')
     # Open the file 'myfile.h5' in read-only mode
     file = h5py.File(f'{save_features_dir}cochresnet50_activations.h5', 'r')
@@ -148,25 +145,31 @@ def load_audio_features_SRP(stim,delay,all_layers,n_components):
         data = file[layer]
         #print(data.shape, layer)
         X.append(  transformer.fit_transform(  np.array(data)[:(-1*delay),:]  )  )
-        # X_train.append(np.array(data)[:600,:])
-        # X_test.append(np.array(data)[600:,:])
-    
-    # # Don't forget to close the file when you're done
     file.close()
     return(X)
 
 def load_audio_features_PCA(stim,all_layers,n_components):
     #dimensionality reduction to 50 components
     transformer = PCA(n_components=n_components)
-    
     print(f'loading features {n_components} PCA components')
-
     save_features_dir = f'../data/{stim}_clips_cochresnet50/'
-    
     X=[]
-    # X_train=[]
-    # X_test=[]
-    #print('CochResNet50 time-averaged')
+    # Open the file 'myfile.h5' in read-only mode
+    file = h5py.File(f'{save_features_dir}cochresnet50_activations.h5', 'r')
+    for layer in all_layers:
+    # # Now you can access datasets within the file
+        data = file[layer]
+        data = np.nan_to_num(data, nan=0.0)
+        scaler = StandardScaler()
+        X.append( scaler.fit_transform(X= transformer.fit_transform(  np.array(data)),y=None)  )
+    file.close()
+    return(X)
+
+def load_audio_features_SRP(stim,all_layers,eps):
+    #dimensionality reduction to 50 components
+    print(f'loading features for srp')
+    save_features_dir = f'../data/{stim}_clips_cochresnet50/'
+    X=[]
     # Open the file 'myfile.h5' in read-only mode
     file = h5py.File(f'{save_features_dir}cochresnet50_activations.h5', 'r')
     for layer in all_layers:
@@ -176,16 +179,12 @@ def load_audio_features_PCA(stim,all_layers,n_components):
         #print(data.shape, layer)
         #X.append(  transformer.fit_transform(  np.array(data)[:(-1*delay),:]  )  )
         scaler = StandardScaler()
-        X.append( scaler.fit_transform(X= transformer.fit_transform(  np.array(data)),y=None)  )
-
-        # X_train.append(np.array(data)[:600,:])
-        # X_test.append(np.array(data)[600:,:])
-    
-    # # Don't forget to close the file when you're done
+        X.append( scaler.fit_transform( np.array(data),y=None)  )
     file.close()
+    X=apply_srp(X,eps)
+    # # Don't forget to close the file when you're done
     return(X)
-
-
+    
 def load_audio_features_PCAc2(stim,all_layers):
     #dimensionality reduction to 2 components and discard the first component
     transformer = PCA(n_components=2)
@@ -203,7 +202,6 @@ def load_audio_features_PCAc2(stim,all_layers):
     file.close()
     return(X)
     
-
 def load_video_features_srp(stim,all_layers):
     #dimensionality reduction to 50 components
     transformer = SparseRandomProjection(n_components=50)
@@ -220,11 +218,7 @@ def load_video_features_srp(stim,all_layers):
             X_layer.append(emb[k].flatten())
         #X.append(  transformer.fit_transform(  np.array(X_layer)[:(-1*delay),:]  )  )
         X.append(  transformer.fit_transform(  np.array(X_layer)  )  )
-
     return(X)
-
-
-
 
 def load_fmri_data(im_file,delay,indices):
     # load fmri data for a subject

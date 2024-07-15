@@ -254,8 +254,8 @@ def main():
 
     elif args.lassocv:
         from stacking_fmri import get_cv_indices
-        from sklearn.linear_model import MultiTaskLassoCV
-
+        #from sklearn.linear_model import MultiTaskLassoCV
+        from sklearn.linear_model import LassoCV
         unique_name = unique_name + f'_lassocv'
 
         X = X[:,:Y.shape[0]]
@@ -282,16 +282,19 @@ def main():
             train_features = feats[train_ind]#[F[train_ind] for F in features]
             test_data = data[test_ind]
             test_features = feats[test_ind]#[F[test_ind] for F in features]
-        
-            lasso=MultiTaskLassoCV()
-            lasso.fit(train_features, train_data)
-            test_score = lasso.score(test_features, test_data)
-            train_score= lasso.score(train_features, train_data)
-            print(f"fold {ind_num} test R^2 Score: ", format(np.mean(test_score), '.2f'))
-            print(f"fold {ind_num} train R^2 Score: ", format(np.mean(train_score), '.2f'))
-        
-            test_r2_list.append(test_score)
-            train_r2_list.append(train_score)
+            test_r2_list_list=[]
+            train_r2_list_list=[]
+            for i in range(Y.shape[1]):
+                lasso = LassoCV(max_iter=10000,tol=0.001)
+                lasso.fit(train_features, train_data[:, i])
+                test_score = lasso.score(test_features, test_data[:, i])
+                train_score= lasso.score(train_features, train_data[:, i])
+                # print(f"fold {ind_num} test R^2 Score: ", format(np.mean(test_score), '.2f'))
+                # print(f"fold {ind_num} train R^2 Score: ", format(np.mean(train_score), '.2f'))
+                test_r2_list_list.append(test_score)
+                train_r2_list_list.append(train_score)
+            test_r2_list.append(np.asanyarray(test_r2_list_list))
+            train_r2_list.append(np.asanyarray(train_r2_list_list))
         elapsed_time=time.time() - start_time
         print(elapsed_time)
         
@@ -525,7 +528,29 @@ def load_features(feat_set):
         X=nat_asd_utils.apply_pca(X, 100)
         for xx in X:
             hz=xx.shape[0]/600
-            hrf_tools.apply_optimal_hrf_10hz(xx,hz)            
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)
+    
+    
+    elif feat_set=="cochresnet50srp05hrfssfirst":
+        from sklearn.decomposition import PCA
+        features=features_cochresnet
+        X_raw=nat_asd_utils.load_audio_features('DM',features)
+        X=nat_asd_utils.standardscale(X_raw)
+        X=nat_asd_utils.apply_srp(X,0.5)
+        for xx in X:
+            hz=xx.shape[0]/600
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)
+    elif feat_set=="cochresnet50srp01hrfssfirst":
+        from sklearn.decomposition import PCA
+        features=features_cochresnet
+        X_raw=nat_asd_utils.load_audio_features('DM',features)
+        X=nat_asd_utils.standardscale(X_raw)
+        X=nat_asd_utils.apply_srp(X,0.1)
+        for xx in X:
+            hz=xx.shape[0]/600
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)
+
+    
     elif feat_set=="cochresnet50pca1hrf":
         features=features_cochresnet
         feature_filename='DM_cochresnet50_activations-mean_PCA-1.hdf5'
@@ -629,10 +654,31 @@ def load_features(feat_set):
             hrf_tools.apply_optimal_hrf_10hz(xx,hz)
 
 
-
-
-
-
+    elif feat_set=="cochresnet50srp01hrffriends_s01e02a":
+        features=features_cochresnet
+        X=nat_asd_utils.load_audio_features_SRP('friends_s01e02a',features,0.1)
+        for xx in X:
+            hz=xx.shape[0]/703
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)
+    elif feat_set=="cochresnet50srp01hrffriends_s01e02b":
+        features=features_cochresnet
+        X=nat_asd_utils.load_audio_features_SRP('friends_s01e02b',features,0.1)
+        for xx in X:
+            hz=xx.shape[0]/703
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)    
+    elif feat_set=="cochresnet50srp05hrffriends_s01e02a":
+        features=features_cochresnet
+        X=nat_asd_utils.load_audio_features_SRP('friends_s01e02a',features,0.5)
+        for xx in X:
+            hz=xx.shape[0]/703
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)
+    elif feat_set=="cochresnet50srp05hrffriends_s01e02b":
+        features=features_cochresnet
+        X=nat_asd_utils.load_audio_features_SRP('friends_s01e02b',features,0.5)
+        for xx in X:
+            hz=xx.shape[0]/703
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)    
+    
 
 
 
