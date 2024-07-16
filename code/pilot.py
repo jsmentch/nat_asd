@@ -50,6 +50,7 @@ def main():
     parser.add_argument("-b", "--bootstrap", type=int, help="bootstrap: which permutation it is", default=None)
     parser.add_argument('-l', '--plot', help="to make a plot or not", action='store_true')  # on/off flag
     parser.add_argument('-z', '--zscore', help="to zscore or not", action='store_true')  # on/off flag
+    parser.add_argument('-y', '--zscorey', help="to zscore brain data or not", action='store_true')  # on/off flag
     parser.add_argument('-g', '--himalaya', help="to run group banded regression from himalaya instead of stacked regression", action='store_true')  # on/off flag
     parser.add_argument('-r', '--ridgecv', help="to run simple ridgecv", action='store_true')  # on/off flag
     parser.add_argument('-e', '--elasticnetcv', help="to run simple elasticnetcv", action='store_true')  # on/off flag
@@ -77,6 +78,11 @@ def main():
             Y=load_sub_brain_friends(sub,args.friendstask,delay,atlas_indices_indices)
             unique_name=unique_name+'_friends'
     X,features=load_features(args.features) #load X
+    if args.zscorey:
+        from scipy.stats import zscore
+        print('zscoring brain data')    
+        Y=zscore(Y)
+        unique_name=unique_name+'_yz'
 
     if args.ridgecv:
         print('run ridgecv') #skip the array shaping here and do differently later
@@ -89,7 +95,7 @@ def main():
         if args.zscore:
             X=nat_asd_utils.apply_zscore(X)
             unique_name = unique_name + f'_z'
-        Y= Y[:X[0].shape[0],:]
+        Y=Y[:X[0].shape[0],:]
 
     if args.bootstrap is None:
         print("No value was passed to args.bootstrap")
@@ -123,12 +129,7 @@ def main():
             train_features = [F[train_ind] for F in feats]
             test_data = data[test_ind]
             test_features = [F[test_ind] for F in feats]
-        
-        
-        
-        #    X_train, X_test, Y_train, Y_test = train_test_split(X[i], Y, test_size=0.1, shuffle=False)
-            
-            
+
             banded_ridge= GroupRidgeCV(groups="input",cv=5)
             banded_ridge.fit(train_features, train_data)
             score = banded_ridge.score(test_features, test_data)

@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#SBATCH --job-name=srpe02a
+#SBATCH --job-name=y_z
 #SBATCH --output=/om2/user/jsmentch/nat_asd_logs/%x_%j.out 
 #SBATCH --error=/om2/user/jsmentch/nat_asd_logs/%x_%j.err 
 #SBATCH --partition=normal 
-#SBATCH --time=48:00:00
+#SBATCH --time=5:00:00
 #SBATCH --cpus-per-task=2
 #SBATCH --mem=30G
 #SBATCH --mail-type=FAIL,END
@@ -35,15 +35,15 @@ sub=$1
 # python pilot.py -s $sub -p auditory -f cochresnet50pca10hrffriends_s01e02b -t s01e02b -d 0
 # python pilot.py -s $sub -p auditory -f cochresnet50pca100hrffriends_s01e02b -t s01e02b -d 0
 
-python pilot.py -s $sub -p a4a5 -f cochresnet50pca1hrffriends_s01e02a -t s01e02a -d 0
-python pilot.py -s $sub -p a4a5 -f cochresnet50pca10hrffriends_s01e02a -t s01e02a -d 0
-python pilot.py -s $sub -p a4a5 -f cochresnet50pca100hrffriends_s01e02a -t s01e02a -d 0
-python pilot.py -s $sub -p a4a5 -f cochresnet50pca1hrffriends_s01e02b -t s01e02b -d 0
-python pilot.py -s $sub -p a4a5 -f cochresnet50pca10hrffriends_s01e02b -t s01e02b -d 0
-python pilot.py -s $sub -p a4a5 -f cochresnet50pca100hrffriends_s01e02b -t s01e02b -d 0
+# python pilot.py -s $sub -p a4a5 -f cochresnet50pca1hrffriends_s01e02a -t s01e02a -d 0 -y
+# python pilot.py -s $sub -p a4a5 -f cochresnet50pca10hrffriends_s01e02a -t s01e02a -d 0 -y
+# python pilot.py -s $sub -p a4a5 -f cochresnet50pca100hrffriends_s01e02a -t s01e02a -d 0
+# python pilot.py -s $sub -p a4a5 -f cochresnet50pca1hrffriends_s01e02b -t s01e02b -d 0 -y
+# python pilot.py -s $sub -p a4a5 -f cochresnet50pca10hrffriends_s01e02b -t s01e02b -d 0 -y
+# python pilot.py -s $sub -p a4a5 -f cochresnet50pca100hrffriends_s01e02b -t s01e02b -d 0
 
-# python pilot.py -s $sub -p a4a5 -f cochresnet50srp05hrffriends_s01e02b -t s01e02b -d 0
-# python pilot.py -s $sub -p a4a5 -f cochresnet50srp05hrffriends_s01e02b -t s01e02b -d 0
+# python pilot.py -s $sub -p a4a5 -f cochresnet50srp05hrffriends_s01e02b -t s01e02b -d 0 -y
+# python pilot.py -s $sub -p a4a5 -f cochresnet50srp05hrffriends_s01e02b -t s01e02b -d 0 -y
 # python pilot.py -s $sub -p a4a5 -f cochresnet50srp01hrffriends_s01e02a -t s01e02a -d 0
 # python pilot.py -s $sub -p a4a5 -f cochresnet50srp01hrffriends_s01e02a -t s01e02a -d 0
 
