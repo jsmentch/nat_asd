@@ -4,9 +4,9 @@
 #SBATCH --output=/om2/user/jsmentch/nat_asd_logs/%x_%j.out 
 #SBATCH --error=/om2/user/jsmentch/nat_asd_logs/%x_%j.err 
 #SBATCH --partition=normal 
-#SBATCH --time=5:00:00
+#SBATCH --time=2:00:00
 #SBATCH --cpus-per-task=2
-#SBATCH --mem=12G
+#SBATCH --mem=8G
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jsmentch@mit.edu
 
@@ -39,7 +39,21 @@ sub=$1
 # python pilot.py -s $sub -p auditory -f cochresnet50srp05hrffriends_s01e02b -t s01e02b -d 0
 # python pilot.py -s $sub -p auditory -f cochresnet50srp05hrffriends_s01e02a -t s01e02a -d 0
 
-python pilot.py -s $sub -p auditory -f cochresnet50srp05hrfssfirst -d 0
+# python pilot.py -s $sub -p auditory -f audioset_srp05_friends_s01e02a -t s01e02a -d 0
+# python pilot.py -s $sub -p auditory -f audioset_srp05_friends_s01e02b -t s01e02b -d 0
+# python pilot.py -s $sub -p auditory -f audioset_friends_s01e02a -t s01e02a -d 0
+# python pilot.py -s $sub -p auditory -f audioset_friends_s01e02b -t s01e02b -d 0
+
+# python pilot.py -s $sub -p auditory -f manualhrf_srp05_friends_s01e02a -t s01e02a -d 0
+# python pilot.py -s $sub -p auditory -f manualhrf_srp05_friends_s01e02b -t s01e02b -d 0
+
+
+# python pilot.py -s $sub -p auditory -f cochresnet50srp05hrfssfirst -d 0
+
+# python pilot.py -s $sub -p a4a5 -f cochresnet50srp05hrfssfirst -d 0
+
+python pilot.py -s $sub -p auditory -f manualhrf_srp05 -d 0
+
 
 # python pilot.py -s $sub -p a4a5 -f cochresnet50pca1hrffriends_s01e02a -t s01e02a -d 0 -y
 # python pilot.py -s $sub -p a4a5 -f cochresnet50pca10hrffriends_s01e02a -t s01e02a -d 0 -y

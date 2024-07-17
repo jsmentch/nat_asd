@@ -365,6 +365,26 @@ def load_features(feat_set):
             #print(feature.shape)
             feat_x = resample(feature, 750, axis=0) #resample to 1hz for now 
             X.append(feat_x)
+
+    elif feat_set=='manualhrf_srp05':
+        from scipy.signal import resample
+        X=[]
+        features=['rms','chroma', 'mfcc', 'mfs', 'as_embed', 'as_scores']
+        for f in features:
+            feature=np.load(f'../data/features/DM_{f}.npy')
+            scaler = StandardScaler()
+            feature = scaler.fit_transform(X=feature,y=None)
+            X.append(feature)
+        X=nat_asd_utils.apply_srp(X,0.5)
+        for xx in X:
+            hz=xx.shape[0]/600 #703 seconds in friends
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)
+        X_out=[]
+        for xx in X:
+            xx = resample(xx, 750, axis=0) #resample to 471 TRs
+            X_out.append(xx)
+        X=X_out
+
     elif feat_set=='concatspeech':
         X=[]
         feature_data=[]
@@ -662,7 +682,123 @@ def load_features(feat_set):
         for xx in X:
             hz=xx.shape[0]/703
             hrf_tools.apply_optimal_hrf_10hz(xx,hz)    
+
+
+    elif feat_set=='audioset_friends_s01e02a':
+        from scipy.signal import resample
+        X=[]
+        features=['as_embed', 'as_scores']
+        for f in features:
+            feature=np.load(f'../data/features/s1friends_s01e02a_{f}.npy')
+            scaler = StandardScaler()
+            feature = scaler.fit_transform(X=feature,y=None)
+            X.append(feature)
+        for xx in X:
+            hz=xx.shape[0]/703 #703 seconds in friends
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)    
+        X_out=[]
+        for xx in X:
+            xx = resample(xx, 471, axis=0) #resample to 471 TRs
+            X_out.append(xx)
+        X=X_out
+    elif feat_set=='audioset_friends_s01e02b':
+        from scipy.signal import resample
+        X=[]
+        features=['as_embed', 'as_scores']
+        for f in features:
+            feature=np.load(f'../data/features/s1friends_s01e02b_{f}.npy')
+            scaler = StandardScaler()
+            feature = scaler.fit_transform(X=feature,y=None)
+            X.append(feature)
+        for xx in X:
+            hz=xx.shape[0]/703 #703 seconds in friends
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)    
+        X_out=[]
+        for xx in X:
+            xx = resample(xx, 471, axis=0) #resample to 471 TRs
+            X_out.append(xx)
+        X=X_out
+
+
+
+
+
+
     
+    elif feat_set=='audioset_srp05_friends_s01e02a':
+        from scipy.signal import resample
+        X=[]
+        features=['as_embed', 'as_scores']
+        for f in features:
+            feature=np.load(f'../data/features/s1friends_s01e02a_{f}.npy')
+            scaler = StandardScaler()
+            feature = scaler.fit_transform(X=feature,y=None)
+            X.append(feature)
+        X=nat_asd_utils.apply_srp(X,0.5)
+        for xx in X:
+            hz=xx.shape[0]/703 #703 seconds in friends
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)    
+        X_out=[]
+        for xx in X:
+            xx = resample(xx, 471, axis=0) #resample to 471 TRs
+            X_out.append(xx)
+        X=X_out
+    elif feat_set=='audioset_srp05_friends_s01e02b':
+        from scipy.signal import resample
+        X=[]
+        features=['as_embed', 'as_scores']
+        for f in features:
+            feature=np.load(f'../data/features/s1friends_s01e02b_{f}.npy')
+            scaler = StandardScaler()
+            feature = scaler.fit_transform(X=feature,y=None)
+            X.append(feature)
+        X=nat_asd_utils.apply_srp(X,0.5)
+        for xx in X:
+            hz=xx.shape[0]/703 #703 seconds in friends
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)    
+        X_out=[]
+        for xx in X:
+            xx = resample(xx, 471, axis=0) #resample to 471 TRs
+            X_out.append(xx)
+        X=X_out
+
+    elif feat_set=='manualhrf_srp05_friends_s01e02a':
+        from scipy.signal import resample
+        X=[]
+        features=['rms','chroma', 'mfcc', 'mfs', 'as_embed', 'as_scores']
+        for f in features:
+            feature=np.load(f'../data/features/friends_s01e02a_{f}.npy')
+            scaler = StandardScaler()
+            feature = scaler.fit_transform(X=feature,y=None)
+            X.append(feature)
+        X=nat_asd_utils.apply_srp(X,0.5)
+        for xx in X:
+            hz=xx.shape[0]/703 #703 seconds in friends
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)    
+        X_out=[]
+        for xx in X:
+            xx = resample(xx, 471, axis=0) #resample to 471 TRs
+            X_out.append(xx)
+        X=X_out
+    elif feat_set=='manualhrf_srp05_friends_s01e02b':
+        from scipy.signal import resample
+        X=[]
+        features=['rms','chroma', 'mfcc', 'mfs', 'as_embed', 'as_scores']
+        for f in features:
+            feature=np.load(f'../data/features/friends_s01e02b_{f}.npy')
+            scaler = StandardScaler()
+            feature = scaler.fit_transform(X=feature,y=None)
+            X.append(feature)
+        X=nat_asd_utils.apply_srp(X,0.5)
+        for xx in X:
+            hz=xx.shape[0]/703 #703 seconds in friends
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)    
+        X_out=[]
+        for xx in X:
+            xx = resample(xx, 471, axis=0) #resample to 471 TRs
+            X_out.append(xx)
+        X=X_out
+
     elif feat_set=="video_resnet50pca1hrf":
         features=features_resnet
         feature_filename='DM_videos_resnet50-PCA-1.hdf5'
@@ -755,7 +891,6 @@ def load_features(feat_set):
         feature_filename='friends_s01e02b_cochresnet50_activations-mean_PCA-100.hdf5'
         X=nat_asd_utils.load_features_processed(feature_filename,features)
 
-    
     elif feat_set=="cochresnet50pcafull1":
         features=features_cochresnet
         feature_filename='DM_cochresnet50_activations-full_PCA-1.hdf5'
@@ -885,7 +1020,7 @@ def extract_parcels(parcels):
     atlas,atlas_data=nat_asd_utils.load_glasser()
     atlas_indices,indices,parcel_names=nat_asd_utils.get_parcel_indices(atlas,parcels)
     atlas_indices_indices = np.where(np.isin(atlas_data, atlas_indices))[0]
-    print(f'loaded parcels {parcels}')
+    #print(f'loaded parcels {parcels}')
     return(atlas_indices_indices)
 
 def select_parcels(parcel_selection):
