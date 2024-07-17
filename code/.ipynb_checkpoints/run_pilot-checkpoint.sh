@@ -6,7 +6,7 @@
 #SBATCH --partition=normal 
 #SBATCH --time=5:00:00
 #SBATCH --cpus-per-task=2
-#SBATCH --mem=30G
+#SBATCH --mem=12G
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jsmentch@mit.edu
 
@@ -17,6 +17,7 @@ conda activate hbn_asd
 #TASK_ID=${roi_id[$SLURM_ARRAY_TASK_ID]}
 
 # while read sub; do sbatch run_pilot.sh $sub; done < good_pilots_ru_dm_list.txt
+# while read sub; do sbatch run_pilot.sh $sub; done < pilots_ru_dm_list.txt
 
 sub=$1
 #sub=NDARHJ830RXD
@@ -34,6 +35,11 @@ sub=$1
 # python pilot.py -s $sub -p auditory -f cochresnet50pca1hrffriends_s01e02b -t s01e02b -d 0
 # python pilot.py -s $sub -p auditory -f cochresnet50pca10hrffriends_s01e02b -t s01e02b -d 0
 # python pilot.py -s $sub -p auditory -f cochresnet50pca100hrffriends_s01e02b -t s01e02b -d 0
+
+# python pilot.py -s $sub -p auditory -f cochresnet50srp05hrffriends_s01e02b -t s01e02b -d 0
+# python pilot.py -s $sub -p auditory -f cochresnet50srp05hrffriends_s01e02a -t s01e02a -d 0
+
+python pilot.py -s $sub -p auditory -f cochresnet50srp05hrfssfirst -d 0
 
 # python pilot.py -s $sub -p a4a5 -f cochresnet50pca1hrffriends_s01e02a -t s01e02a -d 0 -y
 # python pilot.py -s $sub -p a4a5 -f cochresnet50pca10hrffriends_s01e02a -t s01e02a -d 0 -y

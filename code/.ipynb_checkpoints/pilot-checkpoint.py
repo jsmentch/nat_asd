@@ -8,7 +8,6 @@ import hcp_utils as hcp
 # from sklearn.random_projection import SparseRandomProjection
 # from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
-
 import numpy as np
 from stacking_fmri import stacking_CV_fmri, stacking_fmri
 from ridge_tools import R2
@@ -104,7 +103,6 @@ def main():
         for i in range(len(X)):
             np.random.shuffle(X[i])
         unique_name = unique_name + f'_bootstrap-{args.bootstrap}'
-
 
     if args.himalaya:
         #run himalaya banded regression
@@ -307,10 +305,6 @@ def main():
         output_directory_name='good_pilots'
         np.savez(f'../{output_directory_name}/{unique_name}', test_r2_list=test_r2_list, train_r2_list=train_r2_list, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
 
-    
-
-
-
     else:
         #run stacked regression
         print(f'starting regression')
@@ -327,10 +321,6 @@ def main():
     
         if args.plot:
             plot_violins(r2s, stacked_r2s, S_average, features, unique_name)
-
-
-
-
 
 
 def load_features(feat_set):
@@ -398,7 +388,6 @@ def load_features(feat_set):
         features.append('as-Music')
         X=np.asanyarray(X)
 
-
     elif feat_set=='cochresnet50mean_input_after_preproc_hrf':
         features=['input_after_preproc']
         X=nat_asd_utils.load_audio_features('DM',features)[0]
@@ -440,8 +429,6 @@ def load_features(feat_set):
         hz=X.shape[0]/600
         hrf_tools.apply_optimal_hrf_10hz(X,hz)
 
-
-    
     elif feat_set=='manuallow':
         from scipy.signal import resample
         X=[]
@@ -551,7 +538,6 @@ def load_features(feat_set):
             hz=xx.shape[0]/600
             hrf_tools.apply_optimal_hrf_10hz(xx,hz)
 
-    
     elif feat_set=="cochresnet50pca1hrf":
         features=features_cochresnet
         feature_filename='DM_cochresnet50_activations-mean_PCA-1.hdf5'
@@ -609,8 +595,6 @@ def load_features(feat_set):
             hz=xx.shape[0]/600
             hrf_tools.apply_optimal_hrf_10hz(xx,hz)
 
-
-
     elif feat_set=="cochresnet50pca1hrffriends_s01e02a":
         features=features_cochresnet
         feature_filename='friends_s01e02a_cochresnet50_activations-mean_PCA-1.hdf5'
@@ -654,7 +638,6 @@ def load_features(feat_set):
             hz=xx.shape[0]/703
             hrf_tools.apply_optimal_hrf_10hz(xx,hz)
 
-
     elif feat_set=="cochresnet50srp01hrffriends_s01e02a":
         features=features_cochresnet
         X=nat_asd_utils.load_audio_features_SRP('friends_s01e02a',features,0.1)
@@ -679,10 +662,6 @@ def load_features(feat_set):
         for xx in X:
             hz=xx.shape[0]/703
             hrf_tools.apply_optimal_hrf_10hz(xx,hz)    
-    
-
-
-
     
     elif feat_set=="video_resnet50pca1hrf":
         features=features_resnet
@@ -751,8 +730,6 @@ def load_features(feat_set):
         feature_filename='DM_cochresnet50_activations-mean_PCA-100.hdf5'
         X=nat_asd_utils.load_features_processed(feature_filename,features)
 
-    
-    
     elif feat_set=="cochresnet50pca1friends_s01e02a":
         features=features_cochresnet
         feature_filename='friends_s01e02a_cochresnet50_activations-mean_PCA-1.hdf5'
