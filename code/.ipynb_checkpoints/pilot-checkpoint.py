@@ -384,6 +384,24 @@ def load_features(feat_set):
             xx = resample(xx, 750, axis=0) #resample to 471 TRs
             X_out.append(xx)
         X=X_out
+    elif feat_set=='manualhrf_srp01':
+        from scipy.signal import resample
+        X=[]
+        features=['rms','chroma', 'mfcc', 'mfs', 'as_embed', 'as_scores']
+        for f in features:
+            feature=np.load(f'../data/features/DM_{f}.npy')
+            scaler = StandardScaler()
+            feature = scaler.fit_transform(X=feature,y=None)
+            X.append(feature)
+        X=nat_asd_utils.apply_srp(X,0.1)
+        for xx in X:
+            hz=xx.shape[0]/600 #703 seconds in friends
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)
+        X_out=[]
+        for xx in X:
+            xx = resample(xx, 750, axis=0) #resample to 471 TRs
+            X_out.append(xx)
+        X=X_out
 
     elif feat_set=='concatspeech':
         X=[]
@@ -799,6 +817,45 @@ def load_features(feat_set):
             X_out.append(xx)
         X=X_out
 
+
+    elif feat_set=='manualhrf_srp01_friends_s01e02a':
+        from scipy.signal import resample
+        X=[]
+        features=['rms','chroma', 'mfcc', 'mfs', 'as_embed', 'as_scores']
+        for f in features:
+            feature=np.load(f'../data/features/friends_s01e02a_{f}.npy')
+            scaler = StandardScaler()
+            feature = scaler.fit_transform(X=feature,y=None)
+            X.append(feature)
+        X=nat_asd_utils.apply_srp(X,0.1)
+        for xx in X:
+            hz=xx.shape[0]/703 #703 seconds in friends
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)    
+        X_out=[]
+        for xx in X:
+            xx = resample(xx, 471, axis=0) #resample to 471 TRs
+            X_out.append(xx)
+        X=X_out
+    elif feat_set=='manualhrf_srp01_friends_s01e02b':
+        from scipy.signal import resample
+        X=[]
+        features=['rms','chroma', 'mfcc', 'mfs', 'as_embed', 'as_scores']
+        for f in features:
+            feature=np.load(f'../data/features/friends_s01e02b_{f}.npy')
+            scaler = StandardScaler()
+            feature = scaler.fit_transform(X=feature,y=None)
+            X.append(feature)
+        X=nat_asd_utils.apply_srp(X,0.1)
+        for xx in X:
+            hz=xx.shape[0]/703 #703 seconds in friends
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)    
+        X_out=[]
+        for xx in X:
+            xx = resample(xx, 471, axis=0) #resample to 471 TRs
+            X_out.append(xx)
+        X=X_out
+
+    
     elif feat_set=="video_resnet50pca1hrf":
         features=features_resnet
         feature_filename='DM_videos_resnet50-PCA-1.hdf5'
