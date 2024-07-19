@@ -18,6 +18,8 @@ import nat_asd_utils
 import sys
 import argparse
 import hrf_tools
+from scipy.stats import zscore as zs
+
 
 """
 script to run pilot encoding models
@@ -52,15 +54,27 @@ def main():
     parser.add_argument('-y', '--zscorey', help="to zscore brain data or not", action='store_true')  # on/off flag
     parser.add_argument('-g', '--himalaya', help="to run group banded regression from himalaya instead of stacked regression", action='store_true')  # on/off flag
     parser.add_argument('-r', '--ridgecv', help="to run simple ridgecv", action='store_true')  # on/off flag
+    parser.add_argument('-n', '--ridgecvnew', help="to run simple ridgecv NEW DEV", action='store_true')  # on/off flag
+
     parser.add_argument('-e', '--elasticnetcv', help="to run simple elasticnetcv", action='store_true')  # on/off flag
     parser.add_argument('-a', '--lassocv', help="to run simple elasticnetcv", action='store_true')  # on/off flag
-
+    
     parser.add_argument('-t', '--friendstask', help="the friends task if doing friends", default=None)  # on/off flag
 
     args = parser.parse_args()
 
     sub=args.subject[0]
     delay=args.delay
+#to do set things up like this:
+
+# ridge_1 = {
+#         "plain": ridge_by_lambda,
+#         "svd": ridge_by_lambda_svd,
+#         "ridge_sk": ridge_by_lambda_sk,
+#     }[
+#         method
+#     ]  # loss of the regressor
+
 
     unique_name=f'sub-{sub}_roi-{args.parcels}_feat-{args.features}_delay-{delay}' # for filename saving output
     print(f'running subject {sub}')
@@ -85,6 +99,8 @@ def main():
 
     if args.ridgecv:
         print('run ridgecv') #skip the array shaping here and do differently later
+    elif args.ridgecvnew:
+        print('run elasticnetcv') #skip the array shaping here and do differently later
     elif args.elasticnetcv:
         print('run elasticnetcv') #skip the array shaping here and do differently later
     elif args.lassocv:
@@ -151,18 +167,23 @@ def main():
     elif args.ridgecv:
         from stacking_fmri import get_cv_indices
         from sklearn.linear_model import RidgeCV
-
+        from sklearn.metrics import r2_score
         unique_name = unique_name + f'_ridgecv'
+        # print('X:',X.shape)
+        # print('Y:',Y.shape)
 
-        X = X[:,:Y.shape[0]]
-        Y= Y[:X.shape[1],:]
+        # X = X[:,:Y.shape[0]]
+        # Y= Y[:X.shape[1],:]
+        X = X[:Y.shape[0],:]
+        Y= Y[:X.shape[0],:]
         
         #trim first 20 TRs
-        X = X.T[20:,:]
+        X = X[20:,:]
         Y= Y[20:,:]
-        
+        # print('X:',X.shape)
+        # print('Y:',Y.shape)
         n_time=Y.shape[0]
-        n_folds=5
+        n_folds=10
         ind = get_cv_indices(n_time, n_folds=n_folds)
         data=np.copy(Y)
         feats=np.copy(X)
@@ -170,27 +191,38 @@ def main():
         test_r2_list=[]
         train_r2_list=[]
         coef_list=[]
+        r2_scores=[]
         for ind_num in range(n_folds):
             # split data into training and testing sets
             train_ind = ind != ind_num
             test_ind = ind == ind_num
-            train_data = data[train_ind]
-            train_features = feats[train_ind]#[F[train_ind] for F in features]
-            test_data = data[test_ind]
-            test_features = feats[test_ind]#[F[test_ind] for F in features]
-        
+            #train_data = data[train_ind]
+            train_data = np.nan_to_num(zs(data[train_ind]))
+            #train_features = feats[train_ind]#[F[train_ind] for F in features]
+            train_features = np.nan_to_num(zs(feats[train_ind]))
+            #test_data = data[test_ind]
+            test_data = np.nan_to_num(zs(data[test_ind]))
+            #test_features = feats[test_ind]#[F[test_ind] for F in features]
+            test_features = np.nan_to_num(zs(feats[test_ind]))
             ridge=RidgeCV()
+            # print('train feat, ',train_features.shape)
+            # print('train data, ',train_data.shape)
             ridge.fit(train_features, train_data)
             test_score = ridge.score(test_features, test_data)
             train_score= ridge.score(train_features, train_data)
+            y_pred = ridge.predict(test_features)
+
+            r2 = r2_score(test_data, y_pred)
+            r2_scores.append(r2)
             print(f"fold {ind_num} test R^2 Score: ", format(np.mean(test_score), '.2f'))
             print(f"fold {ind_num} train R^2 Score: ", format(np.mean(train_score), '.2f'))
         
             test_r2_list.append(test_score)
             train_r2_list.append(train_score)
+        r2_scores=np.asanyarray(r2_scores)
+        print(r2_scores.shape)
         elapsed_time=time.time() - start_time
         print(elapsed_time)
-        
         print(f'saving results')
         print("MEAN test R^2 Score: ", format(np.mean(test_r2_list), '.2f'))
         print("MEAN train R^2 Score: ", format(np.mean(train_r2_list), '.2f'))
@@ -198,20 +230,59 @@ def main():
         binary_features = [np.void(s.encode('utf-8')) for s in features]
         output_directory_name='good_pilots'
         np.savez(f'../{output_directory_name}/{unique_name}', test_r2_list=test_r2_list, train_r2_list=train_r2_list, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
+    
+    
+    
+    elif args.ridgecvnew:
+        from stacking_fmri import get_cv_indices,fit_predict
+        from sklearn.linear_model import RidgeCV
+        from sklearn.metrics import r2_score
+        unique_name = unique_name + f'_ridgecv'
+        print('X:',X.shape)
+        print('Y:',Y.shape)
 
+        # X = X[:,:Y.shape[0]]
+        # Y= Y[:X.shape[1],:]
+        X = X[:Y.shape[0],:]
+        Y= Y[:X.shape[0],:]
+        
+        #trim first 20 TRs
+        X = X[20:,:]
+        Y= Y[20:,:]
+        print('X:',X.shape)
+        print('Y:',Y.shape)
+        n_time=Y.shape[0]
+        #n_folds=10
+        #ind = get_cv_indices(n_time, n_folds=n_folds)
+        data=np.copy(Y)
+        feats=np.copy(X)
+        
+        test_r2_list=[]
+        train_r2_list=[]
+        coef_list=[]
+        r2_scores=[]
+        corrs, R2s= fit_predict(data, feats, method="plain", n_folds=10)
+        print(corrs.shape, R2s.shape)
+        print(np.mean(R2s))
     elif args.elasticnetcv:
         from stacking_fmri import get_cv_indices
         from sklearn.linear_model import MultiTaskElasticNetCV
+        from sklearn.linear_model import ElasticNet
 
         unique_name = unique_name + f'_elasticnetcv'
+        print('X:',X.shape)
+        print('Y:',Y.shape)
 
-        X = X[:,:Y.shape[0]]
-        Y= Y[:X.shape[1],:]
+        # X = X[:,:Y.shape[0]]
+        # Y= Y[:X.shape[1],:]
+        X = X[:Y.shape[0],:]
+        Y= Y[:X.shape[0],:]
         
         #trim first 20 TRs
-        X = X.T[20:,:]
+        X = X[20:,:]
         Y= Y[20:,:]
-        
+        print('X:',X.shape)
+        print('Y:',Y.shape)
         n_time=Y.shape[0]
         n_folds=5
         ind = get_cv_indices(n_time, n_folds=n_folds)
@@ -256,14 +327,19 @@ def main():
         #from sklearn.linear_model import MultiTaskLassoCV
         from sklearn.linear_model import LassoCV
         unique_name = unique_name + f'_lassocv'
+        print('X:',X.shape)
+        print('Y:',Y.shape)
 
-        X = X[:,:Y.shape[0]]
-        Y= Y[:X.shape[1],:]
+        # X = X[:,:Y.shape[0]]
+        # Y= Y[:X.shape[1],:]
+        X = X[:Y.shape[0],:]
+        Y= Y[:X.shape[0],:]
         
         #trim first 20 TRs
-        X = X.T[20:,:]
+        X = X[20:,:]
         Y= Y[20:,:]
-        
+        print('X:',X.shape)
+        print('Y:',Y.shape)
         n_time=Y.shape[0]
         n_folds=5
         ind = get_cv_indices(n_time, n_folds=n_folds)
@@ -284,7 +360,8 @@ def main():
             test_r2_list_list=[]
             train_r2_list_list=[]
             for i in range(Y.shape[1]):
-                lasso = LassoCV(max_iter=10000,tol=0.001)
+                #lasso = LassoCV(max_iter=10000,tol=0.001)
+                lasso = LassoCV()
                 lasso.fit(train_features, train_data[:, i])
                 test_score = lasso.score(test_features, test_data[:, i])
                 train_score= lasso.score(train_features, train_data[:, i])
@@ -402,6 +479,127 @@ def load_features(feat_set):
             xx = resample(xx, 750, axis=0) #resample to 471 TRs
             X_out.append(xx)
         X=X_out
+    elif feat_set=='motion_srp05':
+        from scipy.signal import resample
+        from sklearn.random_projection import johnson_lindenstrauss_min_dim
+        from sklearn.random_projection import SparseRandomProjection
+        import h5py
+        # Path to the HDF5 file
+        hdf5_path = '../data/features/DM_pymoten.h5'
+        # Open the HDF5 file
+        with h5py.File(hdf5_path, 'r') as hdf5_file:
+            # Access the dataset
+            motion_features = hdf5_file['pymoten'][:]
+        eps=0.5
+        scaler = StandardScaler()
+        
+        X = resample(motion_features, 750, axis=0)
+        X = scaler.fit_transform(X=X,y=None)
+        n_samples=X.shape[0]
+        n_components=johnson_lindenstrauss_min_dim(n_samples=n_samples, eps=eps)
+        if n_components < n_samples:
+            srp = SparseRandomProjection(n_components=n_components)
+            X=srp.fit_transform( X )
+        hz=X.shape[0]/600 #703 seconds in friends
+        X=hrf_tools.apply_optimal_hrf_10hz(X,hz)
+        features=['motion']
+    elif feat_set=='motion':
+        from scipy.signal import resample
+        from sklearn.random_projection import johnson_lindenstrauss_min_dim
+        from sklearn.random_projection import SparseRandomProjection
+        import h5py
+        # Path to the HDF5 file
+        hdf5_path = '../data/features/DM_pymoten.h5'
+        # Open the HDF5 file
+        with h5py.File(hdf5_path, 'r') as hdf5_file:
+            # Access the dataset
+            motion_features = hdf5_file['pymoten'][:]
+        eps=0.5
+        scaler = StandardScaler()
+        
+        X = resample(motion_features, 750, axis=0)
+        X = scaler.fit_transform(X=X,y=None)
+        hz=X.shape[0]/600 #703 seconds in friends
+        X=hrf_tools.apply_optimal_hrf_10hz(X,hz)
+        features=['motion']
+    elif feat_set=='motion_srp05_friends_s01e02a':
+        from scipy.signal import resample
+        from sklearn.random_projection import johnson_lindenstrauss_min_dim
+        from sklearn.random_projection import SparseRandomProjection
+        import h5py
+        # Path to the HDF5 file
+        hdf5_path = '../data/features/friends_s01e02a_pymoten.h5'
+        # Open the HDF5 file
+        with h5py.File(hdf5_path, 'r') as hdf5_file:
+            # Access the dataset
+            motion_features = hdf5_file['pymoten'][:]
+        eps=0.5
+        scaler = StandardScaler()
+        
+        X = resample(motion_features, 471, axis=0) #resample to 471 TRs friends 750 TRs HBN
+        X = scaler.fit_transform(X=X,y=None)
+        n_samples=X.shape[0]
+        n_components=johnson_lindenstrauss_min_dim(n_samples=n_samples, eps=eps)
+        if n_components < n_samples:
+            srp = SparseRandomProjection(n_components=n_components)
+            X=srp.fit_transform( X )
+        hz=X.shape[0]/703 #703 seconds in friends , 600 in HBN
+        X=hrf_tools.apply_optimal_hrf_10hz(X,hz)
+        features=['motion']
+    elif feat_set=='motion_srp05_friends_s01e02b':
+        from scipy.signal import resample
+        from sklearn.random_projection import johnson_lindenstrauss_min_dim
+        from sklearn.random_projection import SparseRandomProjection
+        import h5py
+        # Path to the HDF5 file
+        hdf5_path = '../data/features/friends_s01e02b_pymoten.h5'
+        # Open the HDF5 file
+        with h5py.File(hdf5_path, 'r') as hdf5_file:
+            # Access the dataset
+            motion_features = hdf5_file['pymoten'][:]
+        eps=0.5
+        scaler = StandardScaler()
+        
+        X = resample(motion_features, 471, axis=0) #resample to 471 TRs friends 750 TRs HBN
+        X = scaler.fit_transform(X=X,y=None)
+        n_samples=X.shape[0]
+        n_components=johnson_lindenstrauss_min_dim(n_samples=n_samples, eps=eps)
+        if n_components < n_samples:
+            srp = SparseRandomProjection(n_components=n_components)
+            X=srp.fit_transform( X )
+        hz=X.shape[0]/703 #703 seconds in friends , 600 in HBN
+        X=hrf_tools.apply_optimal_hrf_10hz(X,hz)
+        features=['motion']
+    elif feat_set=='motion_friends_s01e02a':
+        from scipy.signal import resample
+        import h5py
+        # Path to the HDF5 file
+        hdf5_path = '../data/features/friends_s01e02a_pymoten.h5'
+        # Open the HDF5 file
+        with h5py.File(hdf5_path, 'r') as hdf5_file:
+            # Access the dataset
+            motion_features = hdf5_file['pymoten'][:]
+        scaler = StandardScaler()
+        X = resample(motion_features, 471, axis=0) #resample to 471 TRs friends 750 TRs HBN
+        X = scaler.fit_transform(X=X,y=None)
+        hz=X.shape[0]/703 #703 seconds in friends , 600 in HBN
+        X=hrf_tools.apply_optimal_hrf_10hz(X,hz)
+        features=['motion']
+    elif feat_set=='motion_friends_s01e02b':
+        from scipy.signal import resample
+        import h5py
+        # Path to the HDF5 file
+        hdf5_path = '../data/features/friends_s01e02b_pymoten.h5'
+        # Open the HDF5 file
+        with h5py.File(hdf5_path, 'r') as hdf5_file:
+            # Access the dataset
+            motion_features = hdf5_file['pymoten'][:]
+        scaler = StandardScaler()
+        X = resample(motion_features, 471, axis=0) #resample to 471 TRs friends 750 TRs HBN
+        X = scaler.fit_transform(X=X,y=None)
+        hz=X.shape[0]/703 #703 seconds in friends , 600 in HBN
+        X=hrf_tools.apply_optimal_hrf_10hz(X,hz)
+        features=['motion']
 
     elif feat_set=='concatspeech':
         X=[]
@@ -419,12 +617,37 @@ def load_features(feat_set):
         for xx in Xx:
             hz=xx.shape[0]/600
             hrf_tools.apply_optimal_hrf_10hz(xx,hz)
-        
         X.append(Xx[1][:,0])
         X.append(Xx[1][:,132])
         features.append('as-Speech')
         features.append('as-Music')
-        X=np.asanyarray(X)
+        X=np.asanyarray(X).T
+    
+    
+    elif feat_set=='cochresnet50pca1_flat':
+        X1,features=load_features('cochresnet50pca1hrfssfirst')
+        X=np.asanyarray(X1)[:,:,0].T
+        features=['cochresnet50pca1']
+
+    elif feat_set=='testconcat':
+        X=[]
+        feature_data=[]
+        X1,features=load_features('cochresnet50pca1hrfssfirst')
+        X1 = [x[:,0] for x in X1]
+        X.append(X1[4])
+        X.append(X1[5])
+        
+        
+        X1,feats=load_features('audioset')
+        Xx = [x[:-1,:] for x in X1]
+        for xx in Xx:
+            hz=xx.shape[0]/600
+            hrf_tools.apply_optimal_hrf_10hz(xx,hz)
+        X.append(Xx[1][:,0])
+        #X.append(Xx[1][:,132])
+        features.append('as-Speech')
+        #features.append('as-Music')
+        X=np.asanyarray(X).T
 
     elif feat_set=='cochresnet50mean_input_after_preproc_hrf':
         features=['input_after_preproc']
@@ -1124,7 +1347,9 @@ def select_parcels(parcel_selection):
                 'V3',
                 'V4',
                 'MT']
-
+    elif parcel_selection == 'MT':
+        parcels=[
+                'MT']
     elif parcel_selection == 'ventralvisual':
         parcels=[
                 'FFC',
@@ -1195,6 +1420,8 @@ def select_parcels(parcel_selection):
                 'A4',
                 'TA2',
                 'A5']
+    else:
+        parcels=parcel_selection
     return(parcels)
 
 if __name__ == "__main__":

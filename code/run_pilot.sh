@@ -6,7 +6,7 @@
 #SBATCH --partition=normal 
 #SBATCH --time=48:00:00
 #SBATCH --cpus-per-task=2
-#SBATCH --mem=16G
+#SBATCH --mem=40G
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jsmentch@mit.edu
 
@@ -92,6 +92,12 @@ python pilot.py -s $sub -p auditory -f cochresnet50srp01hrfssfirst -d 0
 # python pilot.py -s $sub -p a4a5 -f cochresnet50mean_layer3_hrf -d 0 -a
 # python pilot.py -s $sub -p a4a5 -f cochresnet50mean_layer4_hrf -d 0 -a
 # python pilot.py -s $sub -p a4a5 -f cochresnet50mean_avgpool_hrf -d 0 -a
+
+
+# python pilot.py -s $sub -p earlyvisual -f motion_srp05 -d 0 -r
+# python pilot.py -s $sub -p earlyvisual -f motion -d 0 -r
+
+
 
 #python pilot.py -s $sub -p all -f manual -d 7 -l
 # python pilot.py -s $sub -p earlyvisual -f resnet50pca1hrf -d 0
