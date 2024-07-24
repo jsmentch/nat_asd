@@ -9,8 +9,8 @@ import hcp_utils as hcp
 # from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 import numpy as np
-from stacking_fmri import stacking_CV_fmri, stacking_fmri
-from ridge_tools import R2
+from stacking_fmri import stacking_CV_fmri, stacking_fmri, CV_ind, R2
+#from ridge_tools import R2
 import matplotlib.pyplot as plt
 import seaborn as sns
 import time
@@ -124,9 +124,7 @@ def main():
         #run himalaya banded regression
         from himalaya.ridge import GroupRidgeCV
         from stacking_fmri import get_cv_indices
-
         unique_name = unique_name + f'_himalaya'
-
         n_time=Y.shape[0]
         n_folds=5
         ind = get_cv_indices(n_time, n_folds=n_folds)
@@ -143,7 +141,6 @@ def main():
             train_features = [F[train_ind] for F in feats]
             test_data = data[test_ind]
             test_features = [F[test_ind] for F in feats]
-
             banded_ridge= GroupRidgeCV(groups="input",cv=5)
             banded_ridge.fit(train_features, train_data)
             score = banded_ridge.score(test_features, test_data)
@@ -152,42 +149,33 @@ def main():
             coef_list.append(banded_ridge.coef_)
         elapsed_time=time.time() - start_time
         print(elapsed_time)
-        
         print(f'saving results')
-        
         S_average=np.mean(coef_list,axis=0)
         banded_r2s=np.mean(r2_list,axis=0)
-
         binary_parcels = [np.void(s.encode('utf-8')) for s in parcels]
         binary_features = [np.void(s.encode('utf-8')) for s in features]
         output_directory_name='good_pilots'
         np.savez(f'../{output_directory_name}/{unique_name}', banded_r2s=banded_r2s, S_average=S_average, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
-
 
     elif args.ridgecv:
         from stacking_fmri import get_cv_indices
         from sklearn.linear_model import RidgeCV
         from sklearn.metrics import r2_score
         unique_name = unique_name + f'_ridgecv'
-        # print('X:',X.shape)
-        # print('Y:',Y.shape)
-
-        # X = X[:,:Y.shape[0]]
-        # Y= Y[:X.shape[1],:]
         X = X[:Y.shape[0],:]
-        Y= Y[:X.shape[0],:]
-        
-        #trim first 20 TRs
-        X = X[20:,:]
-        Y= Y[20:,:]
-        # print('X:',X.shape)
-        # print('Y:',Y.shape)
+        Y = Y[:X.shape[0],:]
+        #trim first 15 TRs
+        X = X[15:,:]
+        Y= Y[15:,:]
         n_time=Y.shape[0]
         n_folds=10
         ind = get_cv_indices(n_time, n_folds=n_folds)
         data=np.copy(Y)
         feats=np.copy(X)
-        
+        n, v = data.shape
+        p = feats.shape[1]
+        ind = CV_ind(n, n_folds)
+        preds_all = np.zeros_like(data)
         test_r2_list=[]
         train_r2_list=[]
         coef_list=[]
@@ -204,34 +192,32 @@ def main():
             test_data = np.nan_to_num(zs(data[test_ind]))
             #test_features = feats[test_ind]#[F[test_ind] for F in features]
             test_features = np.nan_to_num(zs(feats[test_ind]))
-            ridge=RidgeCV()
-            # print('train feat, ',train_features.shape)
-            # print('train data, ',train_data.shape)
+            ridge=RidgeCV(cv=10,alphas=[0.1, 1, 10, 100, 1000])
             ridge.fit(train_features, train_data)
-            test_score = ridge.score(test_features, test_data)
+            #test_score = ridge.score(test_features, test_data)
             train_score= ridge.score(train_features, train_data)
             y_pred = ridge.predict(test_features)
-
-            r2 = r2_score(test_data, y_pred)
-            r2_scores.append(r2)
-            print(f"fold {ind_num} test R^2 Score: ", format(np.mean(test_score), '.2f'))
-            print(f"fold {ind_num} train R^2 Score: ", format(np.mean(train_score), '.2f'))
-        
-            test_r2_list.append(test_score)
+            preds_all[ind == ind_num] = y_pred
+            #r2 = r2_score(test_data, y_pred, multioutput='raw_values')
+            #r2_scores.append(r2)
+            #test_r2_list.append(test_score)
             train_r2_list.append(train_score)
-        r2_scores=np.asanyarray(r2_scores)
-        print(r2_scores.shape)
+        #print(preds_all.shape, data.shape)
+        R2_r2 = R2(preds_all, data)
+        # skl_r2 = r2_score(preds_all, data, multioutput='raw_values')
+        #skl_r2 = r2_score(preds_all, data)
+        # print("old MEAN skl test R^2 Score: ", format(np.mean(test_r2_list), '.2f'))
+        # print("old MEAN skl test R^2 Score: ", format(np.mean(r2_scores), '.2f'))
+        # print("new skl MEAN test R^2 Score: ", format(np.mean(skl_r2), '.2f'))
+        print("MEAN test R^2 Score: ", format(np.mean(R2_r2), '.2f'))
         elapsed_time=time.time() - start_time
         print(elapsed_time)
         print(f'saving results')
-        print("MEAN test R^2 Score: ", format(np.mean(test_r2_list), '.2f'))
         print("MEAN train R^2 Score: ", format(np.mean(train_r2_list), '.2f'))
         binary_parcels = [np.void(s.encode('utf-8')) for s in parcels]
         binary_features = [np.void(s.encode('utf-8')) for s in features]
         output_directory_name='good_pilots'
-        np.savez(f'../{output_directory_name}/{unique_name}', test_r2_list=test_r2_list, train_r2_list=train_r2_list, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
-    
-    
+        np.savez(f'../{output_directory_name}/{unique_name}', stacked_r2s=R2_r2,  train_r2_list=train_r2_list, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
     
     elif args.ridgecvnew:
         from stacking_fmri import get_cv_indices,fit_predict
@@ -268,16 +254,13 @@ def main():
         from stacking_fmri import get_cv_indices
         from sklearn.linear_model import MultiTaskElasticNetCV
         from sklearn.linear_model import ElasticNet
-
         unique_name = unique_name + f'_elasticnetcv'
         print('X:',X.shape)
         print('Y:',Y.shape)
-
         # X = X[:,:Y.shape[0]]
         # Y= Y[:X.shape[1],:]
         X = X[:Y.shape[0],:]
         Y= Y[:X.shape[0],:]
-        
         #trim first 20 TRs
         X = X[20:,:]
         Y= Y[20:,:]
@@ -288,7 +271,6 @@ def main():
         ind = get_cv_indices(n_time, n_folds=n_folds)
         data=np.copy(Y)
         feats=np.copy(X)
-        
         test_r2_list=[]
         train_r2_list=[]
         coef_list=[]
@@ -300,19 +282,16 @@ def main():
             train_features = feats[train_ind]#[F[train_ind] for F in features]
             test_data = data[test_ind]
             test_features = feats[test_ind]#[F[test_ind] for F in features]
-        
             elasticnet=MultiTaskElasticNetCV()
             elasticnet.fit(train_features, train_data)
             test_score = elasticnet.score(test_features, test_data)
             train_score= elasticnet.score(train_features, train_data)
             print(f"fold {ind_num} test R^2 Score: ", format(np.mean(test_score), '.2f'))
             print(f"fold {ind_num} train R^2 Score: ", format(np.mean(train_score), '.2f'))
-        
             test_r2_list.append(test_score)
             train_r2_list.append(train_score)
         elapsed_time=time.time() - start_time
         print(elapsed_time)
-        
         print(f'saving results')
         print("MEAN test R^2 Score: ", format(np.mean(test_r2_list), '.2f'))
         print("MEAN train R^2 Score: ", format(np.mean(train_r2_list), '.2f'))
@@ -329,12 +308,10 @@ def main():
         unique_name = unique_name + f'_lassocv'
         print('X:',X.shape)
         print('Y:',Y.shape)
-
         # X = X[:,:Y.shape[0]]
         # Y= Y[:X.shape[1],:]
         X = X[:Y.shape[0],:]
         Y= Y[:X.shape[0],:]
-        
         #trim first 20 TRs
         X = X[20:,:]
         Y= Y[20:,:]
@@ -345,7 +322,6 @@ def main():
         ind = get_cv_indices(n_time, n_folds=n_folds)
         data=np.copy(Y)
         feats=np.copy(X)
-        
         test_r2_list=[]
         train_r2_list=[]
         coef_list=[]
@@ -388,14 +364,11 @@ def main():
         r2s, stacked_r2s, r2s_weighted, _, _, S_average = stacking_CV_fmri(Y, X, method = 'cross_val_ridge',n_folds = 5,score_f=R2)
         elapsed_time=time.time() - start_time
         print(elapsed_time)
-        
         print(f'saving results')
-        
         binary_parcels = [np.void(s.encode('utf-8')) for s in parcels]
         binary_features = [np.void(s.encode('utf-8')) for s in features]
         output_directory_name='good_pilots'
         np.savez(f'../{output_directory_name}/{unique_name}', r2s=r2s, stacked_r2s=stacked_r2s, r2s_weighted=r2s_weighted, S_average=S_average, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
-    
         if args.plot:
             plot_violins(r2s, stacked_r2s, S_average, features, unique_name)
 
@@ -492,13 +465,12 @@ def load_features(feat_set):
             motion_features = hdf5_file['pymoten'][:]
         eps=0.5
         scaler = StandardScaler()
-        
         X = resample(motion_features, 750, axis=0)
         X = scaler.fit_transform(X=X,y=None)
         n_samples=X.shape[0]
         n_components=johnson_lindenstrauss_min_dim(n_samples=n_samples, eps=eps)
         if n_components < n_samples:
-            srp = SparseRandomProjection(n_components=n_components)
+            srp = SparseRandomProjection(n_components=n_components,random_state=42)
             X=srp.fit_transform( X )
         hz=X.shape[0]/600 #703 seconds in friends
         X=hrf_tools.apply_optimal_hrf_10hz(X,hz)
@@ -535,13 +507,12 @@ def load_features(feat_set):
             motion_features = hdf5_file['pymoten'][:]
         eps=0.5
         scaler = StandardScaler()
-        
         X = resample(motion_features, 471, axis=0) #resample to 471 TRs friends 750 TRs HBN
         X = scaler.fit_transform(X=X,y=None)
         n_samples=X.shape[0]
         n_components=johnson_lindenstrauss_min_dim(n_samples=n_samples, eps=eps)
         if n_components < n_samples:
-            srp = SparseRandomProjection(n_components=n_components)
+            srp = SparseRandomProjection(n_components=n_components,random_state=42)
             X=srp.fit_transform( X )
         hz=X.shape[0]/703 #703 seconds in friends , 600 in HBN
         X=hrf_tools.apply_optimal_hrf_10hz(X,hz)
@@ -559,13 +530,12 @@ def load_features(feat_set):
             motion_features = hdf5_file['pymoten'][:]
         eps=0.5
         scaler = StandardScaler()
-        
         X = resample(motion_features, 471, axis=0) #resample to 471 TRs friends 750 TRs HBN
         X = scaler.fit_transform(X=X,y=None)
         n_samples=X.shape[0]
         n_components=johnson_lindenstrauss_min_dim(n_samples=n_samples, eps=eps)
         if n_components < n_samples:
-            srp = SparseRandomProjection(n_components=n_components)
+            srp = SparseRandomProjection(n_components=n_components,random_state=42)
             X=srp.fit_transform( X )
         hz=X.shape[0]/703 #703 seconds in friends , 600 in HBN
         X=hrf_tools.apply_optimal_hrf_10hz(X,hz)
@@ -636,8 +606,6 @@ def load_features(feat_set):
         X1 = [x[:,0] for x in X1]
         X.append(X1[4])
         X.append(X1[5])
-        
-        
         X1,feats=load_features('audioset')
         Xx = [x[:-1,:] for x in X1]
         for xx in Xx:
@@ -959,12 +927,6 @@ def load_features(feat_set):
             xx = resample(xx, 471, axis=0) #resample to 471 TRs
             X_out.append(xx)
         X=X_out
-
-
-
-
-
-
     
     elif feat_set=='audioset_srp05_friends_s01e02a':
         from scipy.signal import resample
@@ -1145,7 +1107,6 @@ def load_features(feat_set):
         features=features_cochresnet
         feature_filename='DM_cochresnet50_activations-mean_PCA-100.hdf5'
         X=nat_asd_utils.load_features_processed(feature_filename,features)
-
     elif feat_set=="cochresnet50pca1friends_s01e02a":
         features=features_cochresnet
         feature_filename='friends_s01e02a_cochresnet50_activations-mean_PCA-1.hdf5'
@@ -1170,7 +1131,6 @@ def load_features(feat_set):
         features=features_cochresnet
         feature_filename='friends_s01e02b_cochresnet50_activations-mean_PCA-100.hdf5'
         X=nat_asd_utils.load_features_processed(feature_filename,features)
-
     elif feat_set=="cochresnet50pcafull1":
         features=features_cochresnet
         feature_filename='DM_cochresnet50_activations-full_PCA-1.hdf5'

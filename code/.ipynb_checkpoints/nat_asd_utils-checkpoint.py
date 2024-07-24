@@ -33,7 +33,7 @@ def apply_srp(X,eps):
         n_components=johnson_lindenstrauss_min_dim(n_samples=n_samples, eps=eps)
 
         if n_components < xx.shape[1]:
-            srp = SparseRandomProjection(n_components=n_components)
+            srp = SparseRandomProjection(n_components=n_components,random_state=42)
             X_srp.append(     srp.fit_transform( xx )   )
         else:
             X_srp.append(xx)
@@ -133,7 +133,7 @@ def load_both_features_hrf(stim):
 
 def load_audio_features_SRP(stim,delay,all_layers,n_components):
     #dimensionality reduction to 50 components
-    transformer = SparseRandomProjection(n_components=n_components)
+    transformer = SparseRandomProjection(n_components=n_components,random_state=42)
     print(f'loading features {n_components} SRP components')
     save_features_dir = f'../data/{stim}_clips_cochresnet50/'
     X=[]
@@ -204,7 +204,7 @@ def load_audio_features_PCAc2(stim,all_layers):
     
 def load_video_features_srp(stim,all_layers):
     #dimensionality reduction to 50 components
-    transformer = SparseRandomProjection(n_components=50)
+    transformer = SparseRandomProjection(n_components=50,random_state=42)
     save_path = f'../data/{stim}_frames_resnet50/'
     #print('ResNet50 frame embeddings')
     # for emb_f in emb_list:
@@ -286,7 +286,7 @@ def get_parcel_indices(atlas, parcels):
     
 def load_audio_features_RAW(stim,all_layers):
     #dimensionality reduction to 50 components
-    #transformer = SparseRandomProjection(n_components=50)
+    #transformer = SparseRandomProjection(n_components=50,random_state=42)
     
 
     save_features_dir = f'../data/{stim}_clips_cochresnet50/'
