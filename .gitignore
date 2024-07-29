@@ -2,11 +2,15 @@ plots/temp/*
 plots/temp/
 tmp/
 tmp/*
+code/nilearn_cache/
+code/nilearn_cache/*
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+nilearn_cache/
 
 # C extensions
 *.so
