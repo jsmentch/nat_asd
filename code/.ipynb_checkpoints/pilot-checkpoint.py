@@ -60,7 +60,7 @@ def main():
     parser.add_argument('-a', '--lassocv', help="to run simple elasticnetcv", action='store_true')  # on/off flag
     
     parser.add_argument('-t', '--friendstask', help="the friends task if doing friends", default=None)  # on/off flag
-
+    parser.add_argument('-v', '--v1', help="append v1 mean timecourse to features in", action='store_true')  # on/off flag
     args = parser.parse_args()
 
     sub=args.subject[0]
@@ -91,6 +91,16 @@ def main():
             Y=load_sub_brain_friends(sub,args.friendstask,delay,atlas_indices_indices)
             unique_name=unique_name+'_friends'
     X,features=load_features(args.features) #load X
+    
+    if args.v1:
+        v1_feat=np.load(f'../data/features/{sub}_DM_v1.npy')
+        v1_feat=v1_feat[:X.shape[0]]
+        X: (749, 5)
+        X=X[:v1_feat.shape[0],:]
+        # print(f'v1: {v1_feat.shape}')
+        # print(f'X: {X.shape}')
+        X = np.column_stack((X, v1_feat))
+        unique_name=unique_name+'_v1'
     if args.zscorey:
         from scipy.stats import zscore
         print('zscoring brain data')    
@@ -465,7 +475,6 @@ def load_features(feat_set):
             motion_features = hdf5_file['pymoten'][:]
         eps=0.5
         scaler = StandardScaler()
-        
         X = resample(motion_features, 750, axis=0)
         X = scaler.fit_transform(X=X,y=None)
         n_samples=X.shape[0]
@@ -508,7 +517,6 @@ def load_features(feat_set):
             motion_features = hdf5_file['pymoten'][:]
         eps=0.5
         scaler = StandardScaler()
-        
         X = resample(motion_features, 471, axis=0) #resample to 471 TRs friends 750 TRs HBN
         X = scaler.fit_transform(X=X,y=None)
         n_samples=X.shape[0]
@@ -532,7 +540,6 @@ def load_features(feat_set):
             motion_features = hdf5_file['pymoten'][:]
         eps=0.5
         scaler = StandardScaler()
-        
         X = resample(motion_features, 471, axis=0) #resample to 471 TRs friends 750 TRs HBN
         X = scaler.fit_transform(X=X,y=None)
         n_samples=X.shape[0]
@@ -1110,7 +1117,6 @@ def load_features(feat_set):
         features=features_cochresnet
         feature_filename='DM_cochresnet50_activations-mean_PCA-100.hdf5'
         X=nat_asd_utils.load_features_processed(feature_filename,features)
-
     elif feat_set=="cochresnet50pca1friends_s01e02a":
         features=features_cochresnet
         feature_filename='friends_s01e02a_cochresnet50_activations-mean_PCA-1.hdf5'
@@ -1135,7 +1141,6 @@ def load_features(feat_set):
         features=features_cochresnet
         feature_filename='friends_s01e02b_cochresnet50_activations-mean_PCA-100.hdf5'
         X=nat_asd_utils.load_features_processed(feature_filename,features)
-
     elif feat_set=="cochresnet50pcafull1":
         features=features_cochresnet
         feature_filename='DM_cochresnet50_activations-full_PCA-1.hdf5'
