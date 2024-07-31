@@ -55,12 +55,12 @@ def main():
     parser.add_argument('-g', '--himalaya', help="to run group banded regression from himalaya instead of stacked regression", action='store_true')  # on/off flag
     parser.add_argument('-r', '--ridgecv', help="to run simple ridgecv", action='store_true')  # on/off flag
     parser.add_argument('-n', '--ridgecvnew', help="to run simple ridgecv NEW DEV", action='store_true')  # on/off flag
-
     parser.add_argument('-e', '--elasticnetcv', help="to run simple elasticnetcv", action='store_true')  # on/off flag
     parser.add_argument('-a', '--lassocv', help="to run simple elasticnetcv", action='store_true')  # on/off flag
-    
     parser.add_argument('-t', '--friendstask', help="the friends task if doing friends", default=None)  # on/off flag
     parser.add_argument('-v', '--v1', help="append v1 mean timecourse to features in", action='store_true')  # on/off flag
+    parser.add_argument('-m', '--r2eval', help="predict the mean timecourse", action='store_true')  # on/off flag
+
     args = parser.parse_args()
 
     sub=args.subject[0]
@@ -115,6 +115,8 @@ def main():
         print('run elasticnetcv') #skip the array shaping here and do differently later
     elif args.lassocv:
         print('run lassocv') #skip the array shaping here and do differently later
+    elif args.r2eval:
+        print('run r2eval') #skip the array shaping here and do differently later
     else:
         X = [array[:Y.shape[0], :] for array in X] #trim X features to the same length as the Y brain data since sometimes the run was cut short
         if args.zscore:
@@ -228,6 +230,79 @@ def main():
         binary_features = [np.void(s.encode('utf-8')) for s in features]
         output_directory_name='good_pilots'
         np.savez(f'../{output_directory_name}/{unique_name}', stacked_r2s=R2_r2,  train_r2_list=train_r2_list, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
+    
+    elif args.r2eval:
+        from stacking_fmri import get_cv_indices
+        # from sklearn.linear_model import RidgeCV
+        from sklearn.metrics import r2_score
+        unique_name = unique_name + f'_r2eval'
+        X = X[:Y.shape[0],:]
+        Y = Y[:X.shape[0],:]
+        #trim first 15 TRs
+        X = X[15:,:]
+        Y= Y[15:,:]
+        n_time=Y.shape[0]
+        n_folds=10
+        ind = get_cv_indices(n_time, n_folds=n_folds)
+        data=np.copy(Y)
+        feats=np.copy(X)
+        n, v = data.shape
+        p = feats.shape[1]
+        ind = CV_ind(n, n_folds)
+        #print(f'data shape {data.shape}')
+        preds_all = np.zeros_like(data)
+        #preds_all = np.zeros(data.shape[0])
+        print(f'preds_all {preds_all.shape}')
+        test_r2_list=[]
+        train_r2_list=[]
+        coef_list=[]
+        r2_scores=[]
+        for ind_num in range(n_folds):
+            #print(f'fold {ind_num}')# split data into training and testing sets
+            train_ind = ind != ind_num
+            test_ind = ind == ind_num
+            #train_data = data[train_ind]
+            train_data = np.nan_to_num(zs(data[train_ind]))
+            #train_features = feats[train_ind]#[F[train_ind] for F in features]
+            train_features = np.nan_to_num(zs(feats[train_ind]))
+            #test_data = data[test_ind]
+            test_data = np.nan_to_num(zs(data[test_ind]))
+            #test_features = feats[test_ind]#[F[test_ind] for F in features]
+            test_features = np.nan_to_num(zs(feats[test_ind]))
+            #print(f'train_data: {train_data.shape}')
+            #print(f'train_features: {train_features.shape}')
+            #print(f'test_data: {test_data.shape}')
+            #print(f'test_features: {test_features.shape}')
+
+            train_data_mean=np.mean(train_data,axis=0)
+            #print(train_data_mean.shape)
+            #ridge=RidgeCV(cv=10,alphas=[0.1, 1, 10, 100, 1000])
+            #ridge.fit(train_features, train_data)
+            #test_score = ridge.score(test_features, test_data)
+            #train_score= ridge.score(train_features, train_data)
+            #y_pred = ridge.predict(test_features)
+            preds_all[ind == ind_num] = train_data_mean
+            #r2 = r2_score(test_data, y_pred, multioutput='raw_values')
+            #r2_scores.append(r2)
+            #test_r2_list.append(test_score)
+            #train_r2_list.append(train_score)
+        #print(preds_all.shape, data.shape)
+        R2_r2 = R2(preds_all, data)
+        # skl_r2 = r2_score(preds_all, data, multioutput='raw_values')
+        #skl_r2 = r2_score(preds_all, data)
+        # print("old MEAN skl test R^2 Score: ", format(np.mean(test_r2_list), '.2f'))
+        # print("old MEAN skl test R^2 Score: ", format(np.mean(r2_scores), '.2f'))
+        # print("new skl MEAN test R^2 Score: ", format(np.mean(skl_r2), '.2f'))
+        print("MEAN test R^2 Score: ", format(np.mean(R2_r2), '.2f'))
+        elapsed_time=time.time() - start_time
+        print(elapsed_time)
+        #print(f'saving results')
+        #print("MEAN train R^2 Score: ", format(np.mean(train_r2_list), '.2f'))
+        binary_parcels = [np.void(s.encode('utf-8')) for s in parcels]
+        binary_features = [np.void(s.encode('utf-8')) for s in features]
+        output_directory_name='good_pilots'
+        #np.savez(f'../{output_directory_name}/{unique_name}', stacked_r2s=R2_r2,  train_r2_list=train_r2_list, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
+
     
     elif args.ridgecvnew:
         from stacking_fmri import get_cv_indices,fit_predict
