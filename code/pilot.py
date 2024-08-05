@@ -20,7 +20,6 @@ import argparse
 import hrf_tools
 from scipy.stats import zscore as zs
 
-
 """
 script to run pilot encoding models
 Standard usage: python pilot.py -s NDARHJ830RXD -p auditory -f cochresnet50pca1 -d 7 -l
@@ -59,6 +58,8 @@ def main():
     parser.add_argument('-a', '--lassocv', help="to run simple elasticnetcv", action='store_true')  # on/off flag
     parser.add_argument('-t', '--friendstask', help="the friends task if doing friends", default=None)  # on/off flag
     parser.add_argument('-v', '--v1', help="append v1 mean timecourse to features in", action='store_true')  # on/off flag
+    parser.add_argument('-o', '--arousal', help="append arousal mean timecourse to features in", action='store_true')  # on/off flag
+
     parser.add_argument('-m', '--r2eval', help="predict the mean timecourse", action='store_true')  # on/off flag
 
     args = parser.parse_args()
@@ -95,17 +96,27 @@ def main():
     if args.v1:
         v1_feat=np.load(f'../data/features/{sub}_DM_v1.npy')
         v1_feat=v1_feat[:X.shape[0]]
-        X: (749, 5)
+        # X: (749, 5)
         X=X[:v1_feat.shape[0],:]
         # print(f'v1: {v1_feat.shape}')
         # print(f'X: {X.shape}')
         X = np.column_stack((X, v1_feat))
         unique_name=unique_name+'_v1'
+    if args.arousal:
+        arousal_feat=np.load(f'../data/features/{sub}_one_percent_arousal.npy')
+        arousal_feat=arousal_feat[:X.shape[0]]
+        # X: (749, 5)
+        X=X[:arousal_feat.shape[0],:]
+        # print(f'arousal: {arousal_feat.shape}')
+        # print(f'X: {X.shape}')
+        X = np.column_stack((X, arousal_feat))
+        # print(f'new X shape: {X.shape}')
+        unique_name=unique_name+'_arousal'
     if args.zscorey:
         from scipy.stats import zscore
-        print('zscoring brain data')    
+        print('zscoring brain data')
         Y=zscore(Y)
-        unique_name=unique_name+'_yz'
+        unique_name=unique_name+'_z'
 
     if args.ridgecv:
         print('run ridgecv') #skip the array shaping here and do differently later
@@ -249,9 +260,10 @@ def main():
         n, v = data.shape
         p = feats.shape[1]
         ind = CV_ind(n, n_folds)
+        #print(ind)
         #print(f'data shape {data.shape}')
         preds_all = np.zeros_like(data)
-        #preds_all = np.zeros(data.shape[0])
+        #preds_all = np.zeros( (data.shape[0]) )
         print(f'preds_all {preds_all.shape}')
         test_r2_list=[]
         train_r2_list=[]
@@ -273,8 +285,15 @@ def main():
             #print(f'train_features: {train_features.shape}')
             #print(f'test_data: {test_data.shape}')
             #print(f'test_features: {test_features.shape}')
-
+            #print(train_data.shape)
             train_data_mean=np.mean(train_data,axis=0)
+            test_data_mean=np.mean(test_data,axis=0)
+            preds_cv = np.zeros_like(test_data_mean)
+            preds_cv[:]=train_data_mean
+            print('predicting shapes',preds_cv.shape, test_data_mean.shape)
+            cvr2 = R2(preds_cv, test_data_mean)
+            print("MEAN test R^2 Score: ", format(np.mean(cvr2), '.2f'))
+
             #print(train_data_mean.shape)
             #ridge=RidgeCV(cv=10,alphas=[0.1, 1, 10, 100, 1000])
             #ridge.fit(train_features, train_data)
@@ -286,7 +305,10 @@ def main():
             #r2_scores.append(r2)
             #test_r2_list.append(test_score)
             #train_r2_list.append(train_score)
-        #print(preds_all.shape, data.shape)
+        preds_all=np.mean(preds_all,axis=0)
+        data=np.mean(data,axis=0)
+        print('predicting preds_all,data:',preds_all.shape, data.shape)
+
         R2_r2 = R2(preds_all, data)
         # skl_r2 = r2_score(preds_all, data, multioutput='raw_values')
         #skl_r2 = r2_score(preds_all, data)
