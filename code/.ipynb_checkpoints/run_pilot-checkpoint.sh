@@ -54,15 +54,15 @@ sub=$1
 # python pilot.py -s $sub -p a4a5 -f manualhrf_srp05_friends_s01e02a -t s01e02a -d 0
 # python pilot.py -s $sub -p a4a5 -f manualhrf_srp05_friends_s01e02b -t s01e02b -d 0
 
-python pilot.py -s $sub -p a4a5 -f cochresnet50srp05hrfssfirst -d 0
-python pilot.py -s $sub -p a4a5 -f manualhrf_srp05 -d 0
-python pilot.py -s $sub -p auditory -f cochresnet50srp05hrfssfirst -d 0
-python pilot.py -s $sub -p auditory -f manualhrf_srp05 -d 0
+python pilot.py -s $sub -p a4a5 -f cochresnet50srp05hrfssfirst -d 0 --skip_existing
+python pilot.py -s $sub -p a4a5 -f manualhrf_srp05 -d 0 --skip_existing
+python pilot.py -s $sub -p auditory -f cochresnet50srp05hrfssfirst -d 0 --skip_existing
+python pilot.py -s $sub -p auditory -f manualhrf_srp05 -d 0 --skip_existing
 
-python pilot.py -s $sub -p a4a5 -f concatspeech -d 0 -r -o
+python pilot.py -s $sub -p a4a5 -f concatspeech -d 0 -r -o --skip_existing
 
-python pilot.py -s $sub -p auditory -f manualhrf_srp01 -d 0
-python pilot.py -s $sub -p auditory -f cochresnet50srp01hrfssfirst -d 0
+python pilot.py -s $sub -p auditory -f manualhrf_srp01 -d 0 --skip_existing
+python pilot.py -s $sub -p auditory -f cochresnet50srp01hrfssfirst -d 0 --skip_existing
 
 # python pilot.py -s $sub -p auditory -f cochresnet50srp01hrfssfirst -d 0
 

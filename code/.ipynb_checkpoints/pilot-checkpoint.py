@@ -61,11 +61,13 @@ def main():
     parser.add_argument('-o', '--arousal', help="append arousal mean timecourse to features in", action='store_true')  # on/off flag
     parser.add_argument('-m', '--r2eval', help="predict the mean timecourse", action='store_true')  # on/off flag
     parser.add_argument("--fd_thresh", type=float, help="the fd threshold for censoring", default=None)
+    parser.add_argument('--skip_existing', help="to skip if the output already exists", action='store_true')  # on/off flag
 
     args = parser.parse_args()
 
     sub=args.subject[0]
     delay=args.delay
+    output_directory_name='good_pilots_new'
 #to do set things up like this:
 
 # ridge_1 = {
@@ -75,8 +77,12 @@ def main():
 #     }[
 #         method
 #     ]  # loss of the regressor
+    
 
-
+    
+    
+    
+    
     unique_name=f'sub-{sub}_roi-{args.parcels}_feat-{args.features}_delay-{delay}' # for filename saving output
     print(f'running subject {sub}')
 
@@ -148,6 +154,9 @@ def main():
         from himalaya.ridge import GroupRidgeCV
         from stacking_fmri import get_cv_indices
         unique_name = unique_name + f'_himalaya'
+        if args.skip_existing and os.path.exists(f'../{output_directory_name}/{unique_name}.npz'):
+            print('output exists, return')
+            return
         n_time=Y.shape[0]
         n_folds=5
         ind = get_cv_indices(n_time, n_folds=n_folds)
@@ -177,7 +186,7 @@ def main():
         banded_r2s=np.mean(r2_list,axis=0)
         binary_parcels = [np.void(s.encode('utf-8')) for s in parcels]
         binary_features = [np.void(s.encode('utf-8')) for s in features]
-        output_directory_name='good_pilots_new'
+        
         np.savez(f'../{output_directory_name}/{unique_name}', banded_r2s=banded_r2s, S_average=S_average, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
 
     elif args.ridgecv:
@@ -185,6 +194,9 @@ def main():
         from sklearn.linear_model import RidgeCV
         from sklearn.metrics import r2_score
         unique_name = unique_name + f'_ridgecv'
+        if args.skip_existing and os.path.exists(f'../{output_directory_name}/{unique_name}.npz'):
+            print('output exists, return')
+            return
         X = X[:Y.shape[0],:]
         Y = Y[:X.shape[0],:]
         if args.fd_thresh:
@@ -254,7 +266,6 @@ def main():
         print("MEAN train R^2 Score: ", format(np.mean(train_r2_list), '.2f'))
         binary_parcels = [np.void(s.encode('utf-8')) for s in parcels]
         binary_features = [np.void(s.encode('utf-8')) for s in features]
-        output_directory_name='good_pilots_new'
         np.savez(f'../{output_directory_name}/{unique_name}', stacked_r2s=R2_r2,  train_r2_list=train_r2_list, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
     
     elif args.r2eval:
@@ -262,6 +273,9 @@ def main():
         # from sklearn.linear_model import RidgeCV
         from sklearn.metrics import r2_score
         unique_name = unique_name + f'_r2eval'
+        if args.skip_existing and os.path.exists(f'../{output_directory_name}/{unique_name}.npz'):
+            print('output exists, return')
+            return
         X = X[:Y.shape[0],:]
         Y = Y[:X.shape[0],:]
         #trim first 15 TRs
@@ -337,7 +351,6 @@ def main():
         #print("MEAN train R^2 Score: ", format(np.mean(train_r2_list), '.2f'))
         binary_parcels = [np.void(s.encode('utf-8')) for s in parcels]
         binary_features = [np.void(s.encode('utf-8')) for s in features]
-        output_directory_name='good_pilots_new'
         #np.savez(f'../{output_directory_name}/{unique_name}', stacked_r2s=R2_r2,  train_r2_list=train_r2_list, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
 
     
@@ -377,6 +390,9 @@ def main():
         from sklearn.linear_model import MultiTaskElasticNetCV
         from sklearn.linear_model import ElasticNet
         unique_name = unique_name + f'_elasticnetcv'
+        if args.skip_existing and os.path.exists(f'../{output_directory_name}/{unique_name}.npz'):
+            print('output exists, return')
+            return
         print('X:',X.shape)
         print('Y:',Y.shape)
         # X = X[:,:Y.shape[0]]
@@ -419,7 +435,6 @@ def main():
         print("MEAN train R^2 Score: ", format(np.mean(train_r2_list), '.2f'))
         binary_parcels = [np.void(s.encode('utf-8')) for s in parcels]
         binary_features = [np.void(s.encode('utf-8')) for s in features]
-        output_directory_name='good_pilots_new'
         np.savez(f'../{output_directory_name}/{unique_name}', test_r2_list=test_r2_list, train_r2_list=train_r2_list, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
 
 
@@ -428,6 +443,9 @@ def main():
         #from sklearn.linear_model import MultiTaskLassoCV
         from sklearn.linear_model import LassoCV
         unique_name = unique_name + f'_lassocv'
+        if args.skip_existing and os.path.exists(f'../{output_directory_name}/{unique_name}.npz'):
+            print('output exists, return')
+            return
         print('X:',X.shape)
         print('Y:',Y.shape)
         # X = X[:,:Y.shape[0]]
@@ -477,19 +495,20 @@ def main():
         print("MEAN train R^2 Score: ", format(np.mean(train_r2_list), '.2f'))
         binary_parcels = [np.void(s.encode('utf-8')) for s in parcels]
         binary_features = [np.void(s.encode('utf-8')) for s in features]
-        output_directory_name='good_pilots_new'
         np.savez(f'../{output_directory_name}/{unique_name}', test_r2_list=test_r2_list, train_r2_list=train_r2_list, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
 
     else:
         #run stacked regression
         print(f'starting regression')
+        if args.skip_existing and os.path.exists(f'../{output_directory_name}/{unique_name}.npz'):
+            print('output exists, return')
+            return
         r2s, stacked_r2s, r2s_weighted, _, _, S_average = stacking_CV_fmri(Y, X, method = 'cross_val_ridge',n_folds = 5,score_f=R2)
         elapsed_time=time.time() - start_time
         print(elapsed_time)
         print(f'saving results')
         binary_parcels = [np.void(s.encode('utf-8')) for s in parcels]
         binary_features = [np.void(s.encode('utf-8')) for s in features]
-        output_directory_name='good_pilots_new'
         np.savez(f'../{output_directory_name}/{unique_name}', r2s=r2s, stacked_r2s=stacked_r2s, r2s_weighted=r2s_weighted, S_average=S_average, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
         if args.plot:
             plot_violins(r2s, stacked_r2s, S_average, features, unique_name)
