@@ -42,7 +42,7 @@ Standard usage: python pilot.py -s NDARHJ830RXD -p auditory -f cochresnet50pca1 
 def main():
     start_time = time.time()
     parser = argparse.ArgumentParser()
-    parser.add_argument("-s-", "--subject", type=str, help="input subject(s)", nargs='+', required=True)
+    parser.add_argument("-s", "--subject", type=str, help="input subject(s)", nargs='+', required=True)
     parser.add_argument("-p", "--parcels", type=str, help="parcels: auditory, visual, audiovisual, all_select, all, custom (WIP)", required=True)
 #    parser.add_argument("-c", "--customparcels", type=str, help="parcels: audio, video, audiovideo, all_select, custom")
     parser.add_argument("-f", "--features", type=str, help="eg cochresnet50, cochresnet50pca1, cochresnet50pca200, manual", required=True)
@@ -59,8 +59,8 @@ def main():
     parser.add_argument('-t', '--friendstask', help="the friends task if doing friends", default=None)  # on/off flag
     parser.add_argument('-v', '--v1', help="append v1 mean timecourse to features in", action='store_true')  # on/off flag
     parser.add_argument('-o', '--arousal', help="append arousal mean timecourse to features in", action='store_true')  # on/off flag
-
     parser.add_argument('-m', '--r2eval', help="predict the mean timecourse", action='store_true')  # on/off flag
+    parser.add_argument("--fd_thresh", type=float, help="the fd threshold for censoring", default=None)
 
     args = parser.parse_args()
 
@@ -103,7 +103,7 @@ def main():
         X = np.column_stack((X, v1_feat))
         unique_name=unique_name+'_v1'
     if args.arousal:
-        arousal_feat=np.load(f'../data/features/{sub}_one_percent_arousal.npy')
+        arousal_feat=np.load(f'../data/features/{sub}_one_percent_arousal_XCP.npy')
         arousal_feat=arousal_feat[:X.shape[0]]
         # X: (749, 5)
         X=X[:arousal_feat.shape[0],:]
@@ -177,7 +177,7 @@ def main():
         banded_r2s=np.mean(r2_list,axis=0)
         binary_parcels = [np.void(s.encode('utf-8')) for s in parcels]
         binary_features = [np.void(s.encode('utf-8')) for s in features]
-        output_directory_name='good_pilots'
+        output_directory_name='good_pilots_new'
         np.savez(f'../{output_directory_name}/{unique_name}', banded_r2s=banded_r2s, S_average=S_average, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
 
     elif args.ridgecv:
@@ -187,6 +187,21 @@ def main():
         unique_name = unique_name + f'_ridgecv'
         X = X[:Y.shape[0],:]
         Y = Y[:X.shape[0],:]
+        if args.fd_thresh:
+            unique_name = unique_name + f'_fd-{args.fd_thresh}'
+            confounds_file=f'/nese/mit/group/sig/projects/hbn/hbn_bids/derivatives/fmriprep_23.2.0/sub-{sub}/ses-HBNsiteRU/func/sub-{sub}_ses-HBNsiteRU_task-movieDM_desc-confounds_timeseries.tsv'
+            df = pd.read_csv(confounds_file, sep='\t')
+            fd=df['framewise_displacement']
+            fd_thresh_count= sum(1 for value in fd if value > args.fd_thresh)
+            fd_thresh_indices=np.where(fd > args.fd_thresh)[0]
+            fd_thresh_indices = fd_thresh_indices[fd_thresh_indices < X.shape[0]]
+            print(f'X shape: {X.shape}')
+            print(f'Y shape: {Y.shape}')
+            print(f'running fd thresh={args.fd_thresh}, removing {fd_thresh_count} indices')
+            X = np.delete(X, fd_thresh_indices, axis=0)
+            Y = np.delete(Y, fd_thresh_indices, axis=0)
+            print(f'X shape: {X.shape}')
+            print(f'Y shape: {Y.shape}')
         #trim first 15 TRs
         X = X[15:,:]
         Y= Y[15:,:]
@@ -239,7 +254,7 @@ def main():
         print("MEAN train R^2 Score: ", format(np.mean(train_r2_list), '.2f'))
         binary_parcels = [np.void(s.encode('utf-8')) for s in parcels]
         binary_features = [np.void(s.encode('utf-8')) for s in features]
-        output_directory_name='good_pilots'
+        output_directory_name='good_pilots_new'
         np.savez(f'../{output_directory_name}/{unique_name}', stacked_r2s=R2_r2,  train_r2_list=train_r2_list, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
     
     elif args.r2eval:
@@ -322,7 +337,7 @@ def main():
         #print("MEAN train R^2 Score: ", format(np.mean(train_r2_list), '.2f'))
         binary_parcels = [np.void(s.encode('utf-8')) for s in parcels]
         binary_features = [np.void(s.encode('utf-8')) for s in features]
-        output_directory_name='good_pilots'
+        output_directory_name='good_pilots_new'
         #np.savez(f'../{output_directory_name}/{unique_name}', stacked_r2s=R2_r2,  train_r2_list=train_r2_list, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
 
     
@@ -404,7 +419,7 @@ def main():
         print("MEAN train R^2 Score: ", format(np.mean(train_r2_list), '.2f'))
         binary_parcels = [np.void(s.encode('utf-8')) for s in parcels]
         binary_features = [np.void(s.encode('utf-8')) for s in features]
-        output_directory_name='good_pilots'
+        output_directory_name='good_pilots_new'
         np.savez(f'../{output_directory_name}/{unique_name}', test_r2_list=test_r2_list, train_r2_list=train_r2_list, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
 
 
@@ -462,7 +477,7 @@ def main():
         print("MEAN train R^2 Score: ", format(np.mean(train_r2_list), '.2f'))
         binary_parcels = [np.void(s.encode('utf-8')) for s in parcels]
         binary_features = [np.void(s.encode('utf-8')) for s in features]
-        output_directory_name='good_pilots'
+        output_directory_name='good_pilots_new'
         np.savez(f'../{output_directory_name}/{unique_name}', test_r2_list=test_r2_list, train_r2_list=train_r2_list, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
 
     else:
@@ -474,7 +489,7 @@ def main():
         print(f'saving results')
         binary_parcels = [np.void(s.encode('utf-8')) for s in parcels]
         binary_features = [np.void(s.encode('utf-8')) for s in features]
-        output_directory_name='good_pilots'
+        output_directory_name='good_pilots_new'
         np.savez(f'../{output_directory_name}/{unique_name}', r2s=r2s, stacked_r2s=stacked_r2s, r2s_weighted=r2s_weighted, S_average=S_average, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
         if args.plot:
             plot_violins(r2s, stacked_r2s, S_average, features, unique_name)
@@ -1337,7 +1352,8 @@ def plot_violins(r2s, stacked_r2s, S_average, features, output_name):
     fig.savefig(f'../plots/pilots/{output_name}.png')
 
 def load_sub_brain(sub,delay,atlas_indices_indices):    
-    im_file = f'/nese/mit/group/sig/projects/hbn/hbn_bids/derivatives/xcp_d_0.7.1/sub-{sub}/ses-HBNsiteRU/func/sub-{sub}_ses-HBNsiteRU_task-movieDM_space-fsLR_den-91k_desc-denoisedSmoothed_bold.dtseries.nii'
+    #im_file = f'/nese/mit/group/sig/projects/hbn/hbn_bids/derivatives/xcp_d_0.7.1/sub-{sub}/ses-HBNsiteRU/func/sub-{sub}_ses-HBNsiteRU_task-movieDM_space-fsLR_den-91k_desc-denoisedSmoothed_bold.dtseries.nii'
+    im_file = f'/om2/scratch/tmp/jsmentch/HBN/sub-{sub}/data/derivatives/xcp_d/sub-{sub}/ses-HBNsiteRU/func/sub-{sub}_ses-HBNsiteRU_task-movieDM_space-fsLR_den-91k_desc-denoisedSmoothed_bold.dtseries.nii'
     img = nb.load(im_file)
     img_y = img.get_fdata()
     Y=img_y[delay:,atlas_indices_indices]
@@ -1356,7 +1372,8 @@ def load_sub_brain_friends(sub,task,delay,atlas_indices_indices):
     return(Y)
     
 def load_sub_brain_all(sub,delay):    
-    im_file = f'/nese/mit/group/sig/projects/hbn/hbn_bids/derivatives/xcp_d_0.7.1/sub-{sub}/ses-HBNsiteRU/func/sub-{sub}_ses-HBNsiteRU_task-movieDM_space-fsLR_den-91k_desc-denoisedSmoothed_bold.dtseries.nii'
+    #im_file = f'/nese/mit/group/sig/projects/hbn/hbn_bids/derivatives/xcp_d_0.7.1/sub-{sub}/ses-HBNsiteRU/func/sub-{sub}_ses-HBNsiteRU_task-movieDM_space-fsLR_den-91k_desc-denoisedSmoothed_bold.dtseries.nii'
+    im_file = f'/om2/scratch/tmp/jsmentch/HBN/sub-{sub}/data/derivatives/xcp_d/sub-{sub}/ses-HBNsiteRU/func/sub-{sub}_ses-HBNsiteRU_task-movieDM_space-fsLR_den-91k_desc-denoisedSmoothed_bold.dtseries.nii'
     img = nb.load(im_file)
     img_y = img.get_fdata()
     Y=img_y[delay:,:]
