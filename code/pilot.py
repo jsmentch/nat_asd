@@ -1372,7 +1372,8 @@ def plot_violins(r2s, stacked_r2s, S_average, features, output_name):
 
 def load_sub_brain(sub,delay,atlas_indices_indices):    
     #im_file = f'/nese/mit/group/sig/projects/hbn/hbn_bids/derivatives/xcp_d_0.7.1/sub-{sub}/ses-HBNsiteRU/func/sub-{sub}_ses-HBNsiteRU_task-movieDM_space-fsLR_den-91k_desc-denoisedSmoothed_bold.dtseries.nii'
-    im_file = f'/om2/scratch/tmp/jsmentch/HBN/sub-{sub}/data/derivatives/xcp_d/sub-{sub}/ses-HBNsiteRU/func/sub-{sub}_ses-HBNsiteRU_task-movieDM_space-fsLR_den-91k_desc-denoisedSmoothed_bold.dtseries.nii'
+    #im_file = f'/om2/scratch/tmp/jsmentch/HBN/sub-{sub}/data/derivatives/xcp_d/sub-{sub}/ses-HBNsiteRU/func/sub-{sub}_ses-HBNsiteRU_task-movieDM_space-fsLR_den-91k_desc-denoisedSmoothed_bold.dtseries.nii'
+    im_file = f'/nese/mit/group/sig/projects/hbn/hbn_bids/derivatives/xcp_d_0.7.5_cifti/sub-{sub}/ses-HBNsiteRU/func/sub-{sub}_ses-HBNsiteRU_task-movieDM_space-fsLR_den-91k_desc-denoisedSmoothed_bold.dtseries.nii'
     img = nb.load(im_file)
     img_y = img.get_fdata()
     Y=img_y[delay:,atlas_indices_indices]
@@ -1392,7 +1393,8 @@ def load_sub_brain_friends(sub,task,delay,atlas_indices_indices):
     
 def load_sub_brain_all(sub,delay):    
     #im_file = f'/nese/mit/group/sig/projects/hbn/hbn_bids/derivatives/xcp_d_0.7.1/sub-{sub}/ses-HBNsiteRU/func/sub-{sub}_ses-HBNsiteRU_task-movieDM_space-fsLR_den-91k_desc-denoisedSmoothed_bold.dtseries.nii'
-    im_file = f'/om2/scratch/tmp/jsmentch/HBN/sub-{sub}/data/derivatives/xcp_d/sub-{sub}/ses-HBNsiteRU/func/sub-{sub}_ses-HBNsiteRU_task-movieDM_space-fsLR_den-91k_desc-denoisedSmoothed_bold.dtseries.nii'
+    #im_file = f'/om2/scratch/tmp/jsmentch/HBN/sub-{sub}/data/derivatives/xcp_d/sub-{sub}/ses-HBNsiteRU/func/sub-{sub}_ses-HBNsiteRU_task-movieDM_space-fsLR_den-91k_desc-denoisedSmoothed_bold.dtseries.nii'
+    im_file = f'/nese/mit/group/sig/projects/hbn/hbn_bids/derivatives/xcp_d_0.7.5_cifti/sub-{sub}/ses-HBNsiteRU/func/sub-{sub}_ses-HBNsiteRU_task-movieDM_space-fsLR_den-91k_desc-denoisedSmoothed_bold.dtseries.nii'
     img = nb.load(im_file)
     img_y = img.get_fdata()
     Y=img_y[delay:,:]
