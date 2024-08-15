@@ -244,13 +244,13 @@ def main():
             test_features = np.nan_to_num(zs(feats[test_ind]))
             ridge=RidgeCV(cv=10,alphas=[0.1, 1, 10, 100, 1000])
             ridge.fit(train_features, train_data)
-            #test_score = ridge.score(test_features, test_data)
+            test_score = ridge.score(test_features, test_data)
             train_score= ridge.score(train_features, train_data)
             y_pred = ridge.predict(test_features)
             preds_all[ind == ind_num] = y_pred
             #r2 = r2_score(test_data, y_pred, multioutput='raw_values')
             #r2_scores.append(r2)
-            #test_r2_list.append(test_score)
+            test_r2_list.append(test_score)
             train_r2_list.append(train_score)
         #print(preds_all.shape, data.shape)
         R2_r2 = R2(preds_all, data)
@@ -266,7 +266,7 @@ def main():
         print("MEAN train R^2 Score: ", format(np.mean(train_r2_list), '.2f'))
         binary_parcels = [np.void(s.encode('utf-8')) for s in parcels]
         binary_features = [np.void(s.encode('utf-8')) for s in features]
-        np.savez(f'../{output_directory_name}/{unique_name}', stacked_r2s=R2_r2,  train_r2_list=train_r2_list, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
+        np.savez(f'../{output_directory_name}/{unique_name}', stacked_r2s=R2_r2, test_r2_list=test_r2_list, train_r2_list=train_r2_list, elapsed_time=elapsed_time, binary_parcels=binary_parcels, binary_features=binary_features)
     
     elif args.r2eval:
         from stacking_fmri import get_cv_indices
