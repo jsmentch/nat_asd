@@ -48,6 +48,8 @@ def main():
     parser.add_argument("-f", "--features", type=str, help="eg cochresnet50, cochresnet50pca1, cochresnet50pca200, manual", required=True)
     parser.add_argument("-d", "--delay", type=int, help="parcels: audio, video, audiovideo, all, custom", required=True)
     parser.add_argument("-b", "--bootstrap", type=int, help="bootstrap: which permutation it is", default=None)
+    parser.add_argument("--ridgecv_bootstrap", type=int, help="bootstrap: which permutation it is", default=None)
+
     parser.add_argument('-l', '--plot', help="to make a plot or not", action='store_true')  # on/off flag
     parser.add_argument('-z', '--zscore', help="to zscore or not", action='store_true')  # on/off flag
     parser.add_argument('-y', '--zscorey', help="to zscore brain data or not", action='store_true')  # on/off flag
@@ -194,9 +196,7 @@ def main():
         from sklearn.linear_model import RidgeCV
         from sklearn.metrics import r2_score
         unique_name = unique_name + f'_ridgecv'
-        if args.skip_existing and os.path.exists(f'../{output_directory_name}/{unique_name}.npz'):
-            print('output exists, return')
-            return
+        
         X = X[:Y.shape[0],:]
         Y = Y[:X.shape[0],:]
         if args.fd_thresh:
@@ -217,6 +217,15 @@ def main():
         #trim first 15 TRs
         X = X[15:,:]
         Y= Y[15:,:]
+        if args.ridgecv_bootstrap is None:
+            print("No value was passed to args.ridgecv_bootstrap")
+        else:
+            print(f"The value passed to args.ridgecv_bootstrap is {args.ridgecv_bootstrap}, randomly permuting features X")
+            np.random.shuffle(X)
+            unique_name = unique_name + f'_bootstrap-{args.ridgecv_bootstrap}'
+        if args.skip_existing and os.path.exists(f'../{output_directory_name}/{unique_name}.npz'):
+            print('output exists, return')
+            return
         n_time=Y.shape[0]
         n_folds=10
         ind = get_cv_indices(n_time, n_folds=n_folds)

@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#SBATCH --job-name=h_crnsrp1
+#SBATCH --job-name=boot
 #SBATCH --output=/om2/user/jsmentch/nat_asd_logs/%x_%j.out 
 #SBATCH --error=/om2/user/jsmentch/nat_asd_logs/%x_%j.err 
 #SBATCH --partition=normal 
 #SBATCH --time=48:00:00
 #SBATCH --cpus-per-task=2
-#SBATCH --mem=40G
+#SBATCH --mem=20G
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jsmentch@mit.edu
 
@@ -54,15 +54,24 @@ sub=$1
 # python pilot.py -s $sub -p a4a5 -f manualhrf_srp05_friends_s01e02a -t s01e02a -d 0
 # python pilot.py -s $sub -p a4a5 -f manualhrf_srp05_friends_s01e02b -t s01e02b -d 0
 
-python pilot.py -s $sub -p a4a5 -f cochresnet50srp05hrfssfirst -d 0 --skip_existing
-python pilot.py -s $sub -p a4a5 -f manualhrf_srp05 -d 0 --skip_existing
-python pilot.py -s $sub -p auditory -f cochresnet50srp05hrfssfirst -d 0 --skip_existing
-python pilot.py -s $sub -p auditory -f manualhrf_srp05 -d 0 --skip_existing
+# python pilot.py -s $sub -p a4a5 -f cochresnet50srp05hrfssfirst -d 0 --skip_existing
+# python pilot.py -s $sub -p a4a5 -f manualhrf_srp05 -d 0 --skip_existing
+# python pilot.py -s $sub -p auditory -f cochresnet50srp05hrfssfirst -d 0 --skip_existing
+# python pilot.py -s $sub -p auditory -f manualhrf_srp05 -d 0 --skip_existing
 
-python pilot.py -s $sub -p a4a5 -f concatspeech -d 0 -r -o --skip_existing
 
-python pilot.py -s $sub -p auditory -f manualhrf_srp01 -d 0 --skip_existing
-python pilot.py -s $sub -p auditory -f cochresnet50srp01hrfssfirst -d 0 --skip_existing
+# for b in {1..100}; do
+#     python pilot.py -s $sub -p a4a5 -f concatspeech -d 0 -r --ridgecv_bootstrap $b --skip_existing
+# done
+
+for b in {1..100}; do
+    python pilot.py -s $sub -p auditory -f cochresnet50srp05hrfssfirst -d 0 --bootstrap $b --skip_existing
+done
+
+
+
+# python pilot.py -s $sub -p auditory -f manualhrf_srp01 -d 0 --skip_existing
+# python pilot.py -s $sub -p auditory -f cochresnet50srp01hrfssfirst -d 0 --skip_existing
 
 # python pilot.py -s $sub -p auditory -f cochresnet50srp01hrfssfirst -d 0
 
