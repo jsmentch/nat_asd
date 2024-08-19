@@ -16,6 +16,25 @@ import time
 #pd.set_option('display.max_rows', None)
 #use the conda environment hbn_asd
 
+def fdr_correction(p_values):
+    # Sort the p-values in ascending order
+    sorted_p_indices = np.argsort(p_values)
+    sorted_p_values = np.sort(p_values)
+    
+    # Calculate the corrected p-values
+    m = len(p_values)
+    ranks = np.arange(1, m + 1)
+    corrected_p_values = sorted_p_values * m / ranks
+    
+    # Ensure the corrected p-values are between 0 and 1
+    corrected_p_values = np.minimum.accumulate(corrected_p_values[::-1])[::-1]
+    
+    # Return the corrected p-values in their original order
+    unsorted_corrected_p_values = np.empty_like(corrected_p_values)
+    unsorted_corrected_p_values[sorted_p_indices] = corrected_p_values
+    
+    return unsorted_corrected_p_values
+    
 def standardscale(X_raw):
     from sklearn.preprocessing import StandardScaler
     X=[]
