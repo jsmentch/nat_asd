@@ -4,9 +4,9 @@
 #SBATCH --output=/om2/user/jsmentch/nat_asd_logs/%x_%j.out 
 #SBATCH --error=/om2/user/jsmentch/nat_asd_logs/%x_%j.err 
 #SBATCH --partition=normal 
-#SBATCH --time=48:00:00
+#SBATCH --time=12:00:00
 #SBATCH --cpus-per-task=2
-#SBATCH --mem=20G
+#SBATCH --mem=8G
 #SBATCH --mail-type=FAIL,END
 #SBATCH --mail-user=jsmentch@mit.edu
 
@@ -64,9 +64,9 @@ sub=$1
 #     python pilot.py -s $sub -p a4a5 -f concatspeech -d 0 -r --ridgecv_bootstrap $b --skip_existing
 # done
 
-for b in {1..100}; do
-    python pilot.py -s $sub -p auditory -f cochresnet50srp05hrfssfirst -d 0 --bootstrap $b --skip_existing
-done
+# for b in {1..100}; do
+#     python pilot.py -s $sub -p auditory -f cochresnet50srp05hrfssfirst -d 0 --bootstrap $b --skip_existing
+# done
 
 
 
@@ -117,7 +117,10 @@ done
 # python pilot.py -s $sub -p earlyvisual -f motion_srp05 -d 0 -r
 # python pilot.py -s $sub -p earlyvisual -f motion -d 0 -r
 
-
+python pilot.py -s $sub -p visual -f motion_srp05 -d 0 -r
+python pilot.py -s $sub -p visual -f motion -d 0 -r
+python pilot.py -s $sub -p MT -f motion -d 0 -r
+python pilot.py -s $sub -p MT -f motion_srp05 -d 0 -r
 
 #python pilot.py -s $sub -p all -f manual -d 7 -l
 # python pilot.py -s $sub -p earlyvisual -f resnet50pca1hrf -d 0
