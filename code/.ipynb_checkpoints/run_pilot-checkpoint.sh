@@ -4,7 +4,7 @@
 #SBATCH --output=/om2/user/jsmentch/nat_asd_logs/%x_%j.out 
 #SBATCH --error=/om2/user/jsmentch/nat_asd_logs/%x_%j.err 
 #SBATCH --partition=normal 
-#SBATCH --time=6:20:00
+#SBATCH --time=24:00:00
 #SBATCH --cpus-per-task=2
 #SBATCH --mem=20G
 #SBATCH --mail-type=FAIL,END
@@ -18,7 +18,7 @@ conda activate hbn_asd
 
 # while read sub; do sbatch run_pilot.sh $sub; done < good_pilots_ru_dm_list.txt
 # while read sub; do sbatch run_pilot.sh $sub; done < pilots_ru_dm_list.txt
-# while read sub; do sbatch run_pilot.sh $sub; done < pilots_ru_dm_list2.txt
+# while read sub; do sbatch run_pilot.sh $sub; done < pilots2_ru_dm_list.txt
 
 
 sub=$1
@@ -119,9 +119,9 @@ python pilot.py -s $sub -p MT -f motion_srp05 -d 0 -r
 #     python pilot.py -s $sub -p a4a5 -f concatspeech -d 0 -r --ridgecv_bootstrap $b --skip_existing
 # done
 
-for b in {1..100}; do
-    python pilot.py -s $sub -p auditory -f cochresnet50srp05hrfssfirst -d 0 --bootstrap $b --skip_existing
-done
+# for b in {1..100}; do
+#     python pilot.py -s $sub -p auditory -f cochresnet50srp05hrfssfirst -d 0 --bootstrap $b --skip_existing
+# done
 
 
 #python pilot.py -s $sub -p all -f manual -d 7 -l
