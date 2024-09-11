@@ -63,6 +63,9 @@ def main():
     parser.add_argument('-o', '--arousal', help="append arousal mean timecourse to features in", action='store_true')  # on/off flag
     parser.add_argument('-m', '--r2eval', help="predict the mean timecourse", action='store_true')  # on/off flag
     parser.add_argument("--fd_thresh", type=float, help="the fd threshold for censoring", default=None)
+    parser.add_argument("--fd_thresh_consec3", type=float, help="the fd threshold for censoring including 3 timepoints after peak", default=None)
+    parser.add_argument("--fd_thresh_consec5", type=float, help="the fd threshold for censoring including 5 timepoints after peak", default=None)
+
     parser.add_argument('--skip_existing', help="to skip if the output already exists", action='store_true')  # on/off flag
 
     args = parser.parse_args()
@@ -210,6 +213,46 @@ def main():
             print(f'X shape: {X.shape}')
             print(f'Y shape: {Y.shape}')
             print(f'running fd thresh={args.fd_thresh}, removing {fd_thresh_count} indices')
+            X = np.delete(X, fd_thresh_indices, axis=0)
+            Y = np.delete(Y, fd_thresh_indices, axis=0)
+            print(f'X shape: {X.shape}')
+            print(f'Y shape: {Y.shape}')
+        elif args.fd_thresh_consec3:
+            unique_name = unique_name + f'_fd_consec-{args.fd_thresh_consec3}'
+            confounds_file=f'/nese/mit/group/sig/projects/hbn/hbn_bids/derivatives/fmriprep_23.2.0/sub-{sub}/ses-HBNsiteRU/func/sub-{sub}_ses-HBNsiteRU_task-movieDM_desc-confounds_timeseries.tsv'
+            df = pd.read_csv(confounds_file, sep='\t')
+            fd=df['framewise_displacement']
+            fd_thresh_count= sum(1 for value in fd if value > args.fd_thresh_consec3)
+            fd_thresh_indices=np.where(fd > args.fd_thresh_consec3)[0]
+            fd_thresh_indices = np.where(fd > args.fd_thresh_consec3)[0]
+            # Add the next 3 consecutive indices after each found index
+            extended_indices = np.concatenate([np.arange(idx, idx+4) for idx in fd_thresh_indices])
+            # Remove duplicates and keep indices within valid bounds
+            fd_thresh_indices = np.unique(extended_indices[extended_indices < X.shape[0]])
+            #fd_thresh_indices = fd_thresh_indices[fd_thresh_indices < X.shape[0]]
+            print(f'X shape: {X.shape}')
+            print(f'Y shape: {Y.shape}')
+            print(f'running fd thresh consec 3={args.fd_thresh_consec3}, removing {fd_thresh_count} indices')
+            X = np.delete(X, fd_thresh_indices, axis=0)
+            Y = np.delete(Y, fd_thresh_indices, axis=0)
+            print(f'X shape: {X.shape}')
+            print(f'Y shape: {Y.shape}')
+        elif args.fd_thresh_consec5:
+            unique_name = unique_name + f'_fd_consec-{args.fd_thresh_consec5}'
+            confounds_file=f'/nese/mit/group/sig/projects/hbn/hbn_bids/derivatives/fmriprep_23.2.0/sub-{sub}/ses-HBNsiteRU/func/sub-{sub}_ses-HBNsiteRU_task-movieDM_desc-confounds_timeseries.tsv'
+            df = pd.read_csv(confounds_file, sep='\t')
+            fd=df['framewise_displacement']
+            fd_thresh_count= sum(1 for value in fd if value > args.fd_thresh_consec5)
+            fd_thresh_indices=np.where(fd > args.fd_thresh_consec5)[0]
+            fd_thresh_indices = np.where(fd > args.fd_thresh_consec5)[0]
+            # Add the next 3 consecutive indices after each found index
+            extended_indices = np.concatenate([np.arange(idx, idx+6) for idx in fd_thresh_indices])
+            # Remove duplicates and keep indices within valid bounds
+            fd_thresh_indices = np.unique(extended_indices[extended_indices < X.shape[0]])
+            #fd_thresh_indices = fd_thresh_indices[fd_thresh_indices < X.shape[0]]
+            print(f'X shape: {X.shape}')
+            print(f'Y shape: {Y.shape}')
+            print(f'running fd thresh consec 3={args.fd_thresh_consec5}, removing {fd_thresh_count} indices')
             X = np.delete(X, fd_thresh_indices, axis=0)
             Y = np.delete(Y, fd_thresh_indices, axis=0)
             print(f'X shape: {X.shape}')
