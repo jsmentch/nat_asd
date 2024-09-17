@@ -229,10 +229,12 @@ def main():
             extended_indices = np.concatenate([np.arange(idx, idx+4) for idx in fd_thresh_indices])
             # Remove duplicates and keep indices within valid bounds
             fd_thresh_indices = np.unique(extended_indices[extended_indices < X.shape[0]])
+            fd_thresh_count_consec=fd_thresh_indices.shape
+
             #fd_thresh_indices = fd_thresh_indices[fd_thresh_indices < X.shape[0]]
             print(f'X shape: {X.shape}')
             print(f'Y shape: {Y.shape}')
-            print(f'running fd thresh consec 3={args.fd_thresh_consec3}, removing {fd_thresh_count} indices')
+            print(f'running fd thresh consec 3={args.fd_thresh_consec3}, removing {fd_thresh_count_consec} indices')
             X = np.delete(X, fd_thresh_indices, axis=0)
             Y = np.delete(Y, fd_thresh_indices, axis=0)
             print(f'X shape: {X.shape}')
@@ -249,10 +251,12 @@ def main():
             extended_indices = np.concatenate([np.arange(idx, idx+6) for idx in fd_thresh_indices])
             # Remove duplicates and keep indices within valid bounds
             fd_thresh_indices = np.unique(extended_indices[extended_indices < X.shape[0]])
+            fd_thresh_count_consec=fd_thresh_indices.shape
+
             #fd_thresh_indices = fd_thresh_indices[fd_thresh_indices < X.shape[0]]
             print(f'X shape: {X.shape}')
             print(f'Y shape: {Y.shape}')
-            print(f'running fd thresh consec 3={args.fd_thresh_consec5}, removing {fd_thresh_count} indices')
+            print(f'running fd thresh consec 3={args.fd_thresh_consec5}, removing {fd_thresh_count_consec} indices')
             X = np.delete(X, fd_thresh_indices, axis=0)
             Y = np.delete(Y, fd_thresh_indices, axis=0)
             print(f'X shape: {X.shape}')
@@ -668,10 +672,56 @@ def load_features(feat_set):
         hz=X.shape[0]/600 #703 seconds in friends
         X=hrf_tools.apply_optimal_hrf_10hz(X,hz)
         features=['motion']
-    elif feat_set=='motion':
+    elif feat_set=='motion_srp01':
         from scipy.signal import resample
         from sklearn.random_projection import johnson_lindenstrauss_min_dim
         from sklearn.random_projection import SparseRandomProjection
+        import h5py
+        # Path to the HDF5 file
+        hdf5_path = '../data/features/DM_pymoten.h5'
+        # Open the HDF5 file
+        with h5py.File(hdf5_path, 'r') as hdf5_file:
+            # Access the dataset
+            motion_features = hdf5_file['pymoten'][:]
+        eps=0.1
+        scaler = StandardScaler()
+        X = resample(motion_features, 750, axis=0)
+        X = scaler.fit_transform(X=X,y=None)
+        n_samples=X.shape[0]
+        n_components=johnson_lindenstrauss_min_dim(n_samples=n_samples, eps=eps)
+        if n_components < n_samples:
+            srp = SparseRandomProjection(n_components=n_components,random_state=42)
+            X=srp.fit_transform( X )
+        hz=X.shape[0]/600 #703 seconds in friends
+        X=hrf_tools.apply_optimal_hrf_10hz(X,hz)
+        features=['motion']
+    elif feat_set=='motion_srp09':
+        from scipy.signal import resample
+        from sklearn.random_projection import johnson_lindenstrauss_min_dim
+        from sklearn.random_projection import SparseRandomProjection
+        import h5py
+        # Path to the HDF5 file
+        hdf5_path = '../data/features/DM_pymoten.h5'
+        # Open the HDF5 file
+        with h5py.File(hdf5_path, 'r') as hdf5_file:
+            # Access the dataset
+            motion_features = hdf5_file['pymoten'][:]
+        eps=0.9
+        scaler = StandardScaler()
+        X = resample(motion_features, 750, axis=0)
+        X = scaler.fit_transform(X=X,y=None)
+        n_samples=X.shape[0]
+        n_components=johnson_lindenstrauss_min_dim(n_samples=n_samples, eps=eps)
+        if n_components < n_samples:
+            srp = SparseRandomProjection(n_components=n_components,random_state=42)
+            X=srp.fit_transform( X )
+        hz=X.shape[0]/600 #703 seconds in friends
+        X=hrf_tools.apply_optimal_hrf_10hz(X,hz)
+        features=['motion']
+    elif feat_set=='motion':
+        from scipy.signal import resample
+        # from sklearn.random_projection import johnson_lindenstrauss_min_dim
+        # from sklearn.random_projection import SparseRandomProjection
         import h5py
         # Path to the HDF5 file
         hdf5_path = '../data/features/DM_pymoten.h5'
@@ -687,6 +737,29 @@ def load_features(feat_set):
         hz=X.shape[0]/600 #703 seconds in friends
         X=hrf_tools.apply_optimal_hrf_10hz(X,hz)
         features=['motion']
+
+
+
+    elif feat_set=='motion_pca5':
+        import h5py
+        from scipy.signal import resample
+        from sklearn.decomposition import PCA
+        hdf5_path = '../data/features/DM_pymoten.h5'
+        with h5py.File(hdf5_path, 'r') as hdf5_file:
+            motion_features = hdf5_file['pymoten'][:]
+        scaler = StandardScaler()
+        X = resample(motion_features, 750, axis=0)
+        X = scaler.fit_transform(X=X,y=None)
+        n_samples=X.shape[0]
+        transformer = PCA(n_components=5)
+        X=transformer.fit_transform(X)
+        hz=X.shape[0]/600 #703 seconds in friends
+        X=hrf_tools.apply_optimal_hrf_10hz(X,hz)
+        features=['motion']
+
+
+
+    
     elif feat_set=='motion_srp05_friends_s01e02a':
         from scipy.signal import resample
         from sklearn.random_projection import johnson_lindenstrauss_min_dim
