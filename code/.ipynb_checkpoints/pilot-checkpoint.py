@@ -672,6 +672,77 @@ def load_features(feat_set):
         hz=X.shape[0]/600 #703 seconds in friends
         X=hrf_tools.apply_optimal_hrf_10hz(X,hz)
         features=['motion']
+
+
+
+
+    elif feat_set=="lla_lufs":        
+        from scipy.stats import zscore
+        features=['lla_lufs']
+        lla_lufs=np.load(f'../data/features/DM_lla_lufs.npy')
+        X = zscore(lla_lufs)
+        hz=X.shape[0]/600 #703 seconds in friends
+        X=hrf_tools.apply_optimal_hrf_10hz(X.reshape(-1, 1),hz)
+
+    elif feat_set=="lla_rms":        
+        from scipy.stats import zscore
+        features=['lla_rms']
+        lla_rms=np.load(f'../data/features/DM_lla_rms.npy')
+        X = zscore(lla_rms)
+        hz=X.shape[0]/600 #703 seconds in friends
+        X=hrf_tools.apply_optimal_hrf_10hz(X.reshape(-1, 1),hz)
+
+    elif feat_set=="lla_lufs_rms":        
+        from scipy.stats import zscore
+        features=['lla_lufs_rms']
+        lla_rms=np.load(f'../data/features/DM_lla_rms.npy')
+        lla_rms = zscore(lla_rms)
+        hz=lla_rms.shape[0]/600 #703 seconds in friends
+        lla_rms=hrf_tools.apply_optimal_hrf_10hz(lla_rms.reshape(-1, 1),hz)
+
+        lla_lufs=np.load(f'../data/features/DM_lla_lufs.npy')
+        lla_lufs = zscore(lla_lufs)
+        hz=lla_lufs.shape[0]/600 #703 seconds in friends
+        lla_lufs=hrf_tools.apply_optimal_hrf_10hz(lla_lufs.reshape(-1, 1),hz)
+
+        X = np.concatenate((lla_rms, lla_lufs), axis=1)
+
+    elif feat_set=="lla_cochpca5":        
+        from sklearn.decomposition import PCA
+        features=['layer1']
+        X=nat_asd_utils.load_audio_features('DM',features)[0]
+        n_components=5
+        pca = PCA(n_components=n_components)
+        X=pca.fit_transform(X)
+        hz=X.shape[0]/600
+        X=hrf_tools.apply_optimal_hrf_10hz(X,hz)
+
+    elif feat_set=="lla_lufs_rms_cochpca5":        
+        from scipy.stats import zscore
+        from sklearn.decomposition import PCA
+        features=['layer1']
+        lla_rms=np.load(f'../data/features/DM_lla_rms.npy')
+        lla_rms = zscore(lla_rms)
+        hz=lla_rms.shape[0]/600 #703 seconds in friends
+        lla_rms=hrf_tools.apply_optimal_hrf_10hz(lla_rms.reshape(-1, 1),hz)
+
+        lla_lufs=np.load(f'../data/features/DM_lla_lufs.npy')
+        lla_lufs = zscore(lla_lufs)
+        hz=lla_lufs.shape[0]/600 #703 seconds in friends
+        lla_lufs=hrf_tools.apply_optimal_hrf_10hz(lla_lufs.reshape(-1, 1),hz)
+
+
+        lla_cochpca5=nat_asd_utils.load_audio_features('DM',features)[0]
+        n_components=5
+        pca = PCA(n_components=n_components)
+        lla_cochpca5=pca.fit_transform(lla_cochpca5)
+        hz=lla_cochpca5.shape[0]/600
+        lla_cochpca5=hrf_tools.apply_optimal_hrf_10hz(lla_cochpca5,hz)
+        
+        X = np.concatenate((lla_rms[:749], lla_lufs[:749], lla_cochpca5), axis=1)
+        features=['lla_lufs_rms_cochpca5']
+
+        
     elif feat_set=='motion_srp01':
         from scipy.signal import resample
         from sklearn.random_projection import johnson_lindenstrauss_min_dim
@@ -1548,6 +1619,9 @@ def select_parcels(parcel_selection):
         parcels=[
         'A4',
         'A5']
+    elif parcel_selection == 'A1':
+        parcels=[
+        'A1']
     elif parcel_selection == 'visual':
         parcels=[
                 'V1',
